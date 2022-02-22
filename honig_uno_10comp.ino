@@ -6,25 +6,9 @@
 // ########## INIT DISPLAY ##########
 
 // LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE); // Set the LCD I2C address UNO
-LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE); // Set the LCD I2C address MEGA2560 ; PIN 20 SDA, PIN 21SCL 
+   LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE); // Set the LCD I2C address MEGA2560 ; PIN 20 SDA, PIN 21SCL 
 //                    0x3F correct? see https://www.youtube.com/watch?v=B8DNokj9LnY
 
-// HD44780 compatible LCD display special characters
-#define UE "\365" // ü
-#define AE "\341" // ä
-#define OE "\357" // ö
-#define SZ "\342" // ß
-
-// EURO symbole
-byte euro[8] = {
-  B00110,
-  B01001,
-  B11100,
-  B01000,
-  B11100,
-  B01001,
-  B00110,
-};
 
 // ############ specific configurations ####################
 
@@ -40,7 +24,7 @@ unsigned long idlePeriod = 180000; // time in ms between idle messages or shutdo
 
 // debug modus: if you need 10 vendors and one additonal PIN (TX0 / Digital PIN 1 which should normally not be used) on UNO turn debug mode to 0 which disables serial 
 // I use this pin to send a message to my smarthome system for any purchased product
-bool debug = false;
+bool debug = true;
  //     
  //         const int homematic_pin = 1;   
  //        
@@ -76,7 +60,7 @@ const int EEPROM_version = 1;
 // #max
 // #PREIS
 //int conveyorPrice[15] = {600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600}; // default price  
-int conveyorPrice[5] = {700, 700, 700, 700, 700}; // default price  
+int conveyorPrice[5] = {600, 600, 600, 600, 600}; // default price  
 //int conveyorItems[15] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 int conveyorItems[5] = {2, 2, 2, 2, 2};
 
@@ -97,7 +81,7 @@ int pulsecount;
 // const int relaisPin = xx; //
 const int relays[10] = {3, 4, 5, 6, 7, 8, 9, 10 , 11, 12}; //uno: 10 boxes
 //const int relays[15] = {22,24,26,28,30,32,34,36,38,40,42,44,46,48,50}; // mega: 15 boxes
-const int poweroffrelais = 4;  // mega: 4; uno: only possible if less 10 compartments; in this case pin 12 recommended; remove this pin from relais list
+//const int poweroffrelais = 4;  // mega: 4; uno: only possible if less 10 compartments; in this case pin 12 recommended; remove this pin from relais list
 
 // ########## END OF INIT ##########
 
@@ -107,7 +91,8 @@ void setup() {
 
 if (debug) {
   Serial.begin(9600); // start serial communication
-  Serial.println("Setup gestartet");
+  Serial.println("Setup. Max: ");
+  Serial.println(max);
   }
  for (int index = 0; index < max; index++) {
    pinMode(selector[index], INPUT_PULLUP);
@@ -125,8 +110,6 @@ if (debug) {
            
 //  
    
-  lcd.createChar(0, euro); // build € character
-
   lcd.begin(16, 2); // set up the LCD's number of columns and rows
   lcd.print("Bitte warten..."); // Print wait message to the LCD
    if (debug) {
@@ -332,11 +315,11 @@ else
   lcd.setCursor(0, 0);
   lcd.print("power off...");
   delay(2000);
-  digitalWrite(poweroffrelais, LOW);
+ // digitalWrite(poweroffrelais, LOW);
   // power relais not available?... continue..
   idleTimerMillis = millis();
   lcd.clear();
-    digitalWrite(poweroffrelais, HIGH);
+  //  digitalWrite(poweroffrelais, HIGH);
   lcd.print("Bereit..");
   delay(2000);
  }
@@ -374,21 +357,7 @@ void set_values() {
 if (debug) {
     Serial.print("scope ");
     Serial.println(scope);
-    Serial.print("Setup Warenmenge");
-
-    Serial.print("digitalRead(selector[0] ");
-    Serial.println (digitalRead(selector[0])) ;
-    Serial.print("digitalRead(selector[1] ");
-    Serial.println (digitalRead(selector[1])) ;
-    Serial.print("digitalRead(selector[2] ");
-    Serial.println (digitalRead(selector[2])) ;
-    Serial.print("digitalRead(selector[3] ");
-    Serial.println (digitalRead(selector[3])) ;
-    Serial.print("digitalRead(selector[4] ");
-    Serial.println (digitalRead(selector[4])) ;
-
-    Serial.print("while schleife Anzahl def beginnt");
- }    
+      }    
     while (scope == 0) {
       if (digitalRead(selector[0]) == LOW && conveyorItems[index] > 0) {
         conveyorItems[index] = conveyorItems[index] - 1;
@@ -463,7 +432,6 @@ if (debug) {
     lcd.print(pass);
     lcd.print(" Preis");
     lcd.setCursor(0, 1);
-    lcd.write(byte(0)); // display EURO symbol
     lcd.print(" ");
     lcd.print(conveyorPrice[index] / 100.00);
     lcd.print("     ");
@@ -597,8 +565,7 @@ void displayBalance() {
   lcd.setCursor(0, 0);
   lcd.print("Guthaben");
   lcd.setCursor(0, 1); // set cursor to LCD row 2 column 1 (starting with 0)
-  lcd.write(byte(0)); // display EURO symbol
-  lcd.print(" ");
+   lcd.print(" ");
   lcd.print(coinsCurrentValue / 100.00); // display current balance
 }
 
@@ -611,8 +578,7 @@ void displayPrice(int currentPrice) {
   lcd.setCursor(0, 0);
   lcd.print("Preis");
   lcd.setCursor(0, 1); // set cursor to LCD row 2 column 1 (starting with 0)
-  lcd.write(byte(0)); // display EURO symbol
-  lcd.print(" ");
+   lcd.print(" ");
   lcd.print(currentPrice / 100.00);
   if (coinsCurrentValue > 0) {
     delay(1000);
@@ -628,7 +594,7 @@ void displayEmpty() {
   lcd.setCursor(0, 0);
   lcd.print("Leider leer :(");
   lcd.setCursor(0, 1); // set cursor to LCD row 2 column 1 (starting with 0)
-  lcd.print("Bitte neu w" AE "hlen");
+  lcd.print("Bitte neu waehlen");
   if (coinsCurrentValue > 0) {
     delay(1000);
     displayBalance();
@@ -637,7 +603,6 @@ void displayEmpty() {
 
 void displayConfPrice(int con) {
   lcd.setCursor(0, 1);
-  lcd.write(byte(0)); // display EURO symbol
   lcd.print(" ");
   lcd.print(conveyorPrice[con] / 100.00);
   lcd.print("     ");
