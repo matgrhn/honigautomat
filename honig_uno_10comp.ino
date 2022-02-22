@@ -95,8 +95,8 @@ unsigned long oldMillis = 0;
 int pulsecount;
 
 // const int relaisPin = xx; //
-//const int relays[10] = {3, 4, 5, 6, 7, 8, 9, 10 , 11, 12}; //uno: 10 boxes
-const int relays[15] = {22,24,26,28,30,32,34,36,38,40,42,44,46,48,50}; // mega: 15 boxes
+const int relays[10] = {3, 4, 5, 6, 7, 8, 9, 10 , 11, 12}; //uno: 10 boxes
+//const int relays[15] = {22,24,26,28,30,32,34,36,38,40,42,44,46,48,50}; // mega: 15 boxes
 const int poweroffrelais = 4;  // mega: 4; uno: only possible if less 10 compartments; in this case pin 12 recommended; remove this pin from relais list
 
 // ########## END OF INIT ##########
