@@ -91,7 +91,7 @@ void setup() {
 
 if (debug) {
   Serial.begin(9600); // start serial communication
-  Serial.println("Setup. Max: ");
+  Serial.println("Max: ");
   Serial.println(max);
   }
  for (int index = 0; index < max; index++) {
@@ -113,7 +113,7 @@ if (debug) {
   lcd.begin(16, 2); // set up the LCD's number of columns and rows
   lcd.print("Bitte warten..."); // Print wait message to the LCD
    if (debug) {
-  Serial.println("Warten auf Muenzpruefer");
+  Serial.println("Warten Muenzpr");
   }
   delay(2000); // don't start main loop until we're sure that the coin selector has started
 
@@ -135,14 +135,13 @@ if (debug) {
  if ((readEEPROM (0) != EEPROM_version) or (readEEPROM (2) != max))
  {
    if (debug) {
-    Serial.print("Init EEPROM ");
-    Serial.print("EEPROM_version ");
+    Serial.print("EEPROM_vers ");
     Serial.print (readEEPROM (0)); 
-    Serial.print("EEPROM_max ");
+    Serial.print("Emax ");
     Serial.print (readEEPROM (2)); 
-    Serial.print("ProgVersion: ");
+    Serial.print("PVer: ");
     Serial.print(EEPROM_version);  
-    Serial.print("ProgMax: "); 
+    Serial.print("PrMax: "); 
     Serial.println(max);   
    }    
     lcd.clear();
@@ -154,7 +153,7 @@ if (debug) {
   //  lcd.print(" max ");    
   //  lcd.print( max );   
   if (debug) {
-      Serial.print("writeEEprom erforderlich.. ");     
+      Serial.print("writeEEprom .. ");     
   }      
    writeEEPROMcomplete();
    if (debug) {
@@ -165,7 +164,7 @@ if (debug) {
  {
 // read EEPROM and update values
 if (debug) {
-  Serial.println("else:read EEPROM and update values ");
+  Serial.println("else:read EEPROM upd ");
 }  
  readEEPROMcomplete();
    
@@ -173,7 +172,7 @@ if (debug) {
    
  delay(200);
 coinsCurrentValue = 0;
-  lcd.print("Guthaben loeschen.");
+  lcd.print("Guthaben reset.");
 delay(200);
 if (debug) {
   Serial.println("Bereit");
@@ -233,9 +232,9 @@ void CompartementOpen(int j) {
 
   
  if (debug) {
-  Serial.print("Fachnummer ");
+  Serial.print("Fachnr ");
   Serial.print(j+1);
-  Serial.println(" öffnen:");
+  Serial.println(" oeffnen:");
  }
   //hier relais ansteuern
   
@@ -254,7 +253,7 @@ void idle() {
    
      idleTimerMillis = millis();     
      coinsCurrentValue = 0;
-     lcd.print("Guthaben loeschen...");
+     lcd.print("Guthaben reset...");
      delay(200);
      lcd.clear();
      lcd.print("Bereit..");
@@ -332,7 +331,7 @@ else
 
 void set_values() {
   if (debug) {
-  Serial.println("Gerätekonfiguration gestartet");
+  Serial.println("Gerätekonf");
   }
   for (int index = 0; index < max; index++) {
      idleTimerMillis = millis();
@@ -340,14 +339,14 @@ void set_values() {
     int scope = 0;
     int pass = index + 1;
    if (debug) {
-    Serial.print("Anzahl");
+    Serial.print("Anz");
     Serial.println(pass);
    }    
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("Fachnr. ");
     lcd.print(pass);
-    lcd.print(" Anzahl ");
+    lcd.print(" Anz ");
     lcd.setCursor(0, 1);
     lcd.print(conveyorItems[index]);
     lcd.print("  ");
@@ -376,7 +375,7 @@ if (debug) {
       
       if (digitalRead(selector[3]) == LOW) {
 if (debug) {
-        Serial.print("alle Faecher öffnen ");
+        Serial.print("alle oeffnen ");
 }
         //if (maxrow == 1) {
            CompartementOpen(index);          
@@ -404,7 +403,7 @@ if (debug) {
 
       if (digitalRead(selector[2]) == LOW) {
 if (debug) {        
-        Serial.print("Neue Anzahl: ");
+        Serial.print("Neue Anz: ");
         Serial.println(conveyorItems[index]);
 }
         scope++;
@@ -416,14 +415,14 @@ if (debug) {
 
   // Setup Preise Button 1 = runterzählen, Button 2 = raufzählen in 10er Schritten, Button 3 = Ende und Anzeige
 if (debug) {
-  Serial.print("while schleife Preise beginnt");
+  Serial.print("while Prs");
 }  
   for (int index = 0; index < max; index++) {
     // sest conveyor prices
     int scope = 0;
     int pass = index + 1;
  if (debug) {
-    Serial.print("Preis fuer Fach ");
+    Serial.print("Preis Fach ");
     Serial.println(pass);
  }    
     lcd.clear();
@@ -465,11 +464,11 @@ if (debug) {
  coinsCurrentValue = 0;
  //displayBalance();
 if (debug) {  
-  Serial.println("Neue Konfiguration ins Eeprom schreiben...");
+  Serial.println("Neue ins Eeprom.");
 }  
   writeEEPROMcomplete();
 if (debug) {
-  Serial.println("Gerätekonfiguration beendet");
+  Serial.println("Gerätekonf beendet");
 }  
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -484,7 +483,7 @@ if (debug) {
 
 void refill() {
  if (debug) {
-  Serial.print(" Refill gestartet ");
+  Serial.print(" Refill ");
  }  
   lcd.clear();
 if (debug) {
@@ -519,7 +518,7 @@ if (debug) {
           
     if (( conveyorItems[rindex] == 1) and (maxrow > 1)) {
        if (debug) {
-          Serial.print("rindex plus max öffnen ");
+          Serial.print("rindex + max ");
        }          
           lcd.setCursor(0, 1);
           CompartementOpen(rindex + max); 
@@ -530,7 +529,7 @@ if (debug) {
 
     if (( conveyorItems[rindex] == 2) and (maxrow > 2)) {
         if (debug) {
-          Serial.print("rindex plus 10 öffnen ");
+          Serial.print("rindex + 10 ");
         }
           lcd.setCursor(0, 1);
           lcd.print (rindex+max + max +1);
@@ -545,7 +544,7 @@ if (debug) {
     lcd.clear();
     lcd.setCursor(0, 0);
     if (debug) {
-    Serial.println(" Refill beendet. ");
+    Serial.println(" Refill ende. ");
     lcd.print("Refill beendet.");
     }    
     delay(2000);
@@ -588,7 +587,7 @@ void displayPrice(int currentPrice) {
 
 void displayEmpty() {
   if (debug) {
-  Serial.println("Gewähltes Fach leer");
+  Serial.println("Fach leer");
   }  
   lcd.clear(); // reset LCD
   lcd.setCursor(0, 0);
@@ -626,8 +625,8 @@ int readEEPROM (int address)
 void writeEEPROMcomplete ()
  { 
    if (debug) {
-    Serial.print("writeEEPROMcomplete..");
-    Serial.print("version ");
+    Serial.print("writeEEPcomp..");
+    Serial.print("vers ");
     Serial.print(EEPROM_version);  
     Serial.print("max "); 
     Serial.print(max);   
@@ -635,7 +634,7 @@ void writeEEPROMcomplete ()
    writeEPROM (0, EEPROM_version);
    writeEPROM (2, max);
    if (debug) {
-   Serial.print("write eeprom version und max done.");
+   Serial.print("write und max done.");
    }
     for (int index = 0; index < max; index++) {
 //    3          -> 4 + 2 * index : conveyorItems []
@@ -671,14 +670,14 @@ if (debug) {
 void readEEPROMcomplete ()
  { 
  if (debug) {
-    Serial.print("readEEPROMcomplete..");
+    Serial.print("readEEPcompl..");
  }    
 
  //   EEPROM_version = readEEPROM (0);
  //   max            = readEEPROM (2);
 
 if (debug) {    
-    Serial.print("version ");
+    Serial.print("vers ");
     Serial.print(EEPROM_version);  
     Serial.print("max "); 
     Serial.print(max);   
@@ -719,7 +718,7 @@ if (debug) {
     lcd.setCursor(0, 0);
     lcd.print("loaded. ");
     if (debug) {
-    Serial.print(" loaded from EEPROM. "); 
+    Serial.print(" loaded EEPR. "); 
     }    
     delay (200);
    
@@ -732,7 +731,7 @@ if (debug) {
 void loop() {
   if (digitalRead(configbutton) == LOW) {
 if (debug) {
-   Serial.print("DigitalRead(configbutton): LOW");
+   Serial.print("DigitalRead(configb): LOW");
 }
    set_values();
    delay(1000);
@@ -780,7 +779,7 @@ if (debug) {
           coinsCurrentValue = coinsCurrentValue - conveyorPrice[index]; // reduce balance
           conveyorItems[index]--; // reduce items
     if (debug) {
-    Serial.print("update EEPROM conveyorItem ");
+    Serial.print("update EEP conveyorItem ");
     Serial.print(index * 2 + 4, conveyorItems[index]);          
     }
           writeEPROM (index * 2 + 4, conveyorItems[index]);
@@ -792,26 +791,26 @@ if (debug) {
 //          hier gehts weiter - welches Fach öffnen: oben oder unten, der Zähler wurde schon reduziert
 //          ist nicht interessant, wenn es für jedes Fach einen Knopf gibt; 
 if (debug) {
-    Serial.print("conveyorItems[index] ");
+    Serial.print("Items[index] ");
     Serial.print(conveyorItems[index]);
     Serial.print("index ");
     Serial.print(index);
     }
           if ( conveyorItems[index] == 0) {
            if (debug) {
-          Serial.print("index öffnen ");
+          Serial.print("index open");
            }
            CompartementOpen(index); }
           
           if ( conveyorItems[index] == 1) {
           if (debug) {
-          Serial.print("index plus max öffnen ");
+          Serial.print("index + max ");
           }          
           CompartementOpen(index + max); }
 
           if ( conveyorItems[index] == 2) {
            if (debug) {
-          Serial.print("index plus 2 * max öffnen ");
+          Serial.print("index + 2 * max ");
            }
           CompartementOpen(index + max + max); }
 
