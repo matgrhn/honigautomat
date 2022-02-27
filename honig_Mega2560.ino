@@ -58,7 +58,7 @@ const int configbutton = 5;   // 5 for Mega; 13 for Uno
 const int refillbutton = 3;  // 3 for Mega; for Uno 12 (if only one row of compartments exists: maxrow = 1)
 const int powersave_relais_pin = 4;  // 4 for Mega; for Uno 11
 // config
-const int powersave = 1;  // powersave = 1 -> turnoff power after idle threshold; run at least onetime with 0 to ensure correct data on eeprom
+const int powersave = 0;  // powersave = 1 -> turnoff power after idle threshold; run at least onetime with 0 to ensure correct data on eeprom
 
 // #### EEPROM structure
 //  0          -> 1           : version of this structure : 1 
