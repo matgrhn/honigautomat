@@ -1,0 +1,26 @@
+-------------------------------------------------------------------------------
+In Arduino-IDE maybe you see following issue when trying to upload the sketch: 
+Compilation error: Error: 3 INVALID_ARGUMENT: Missing FQBN (Fully Qualified Board Name)
+In this case it may solve to
+- reconnect USB
+- restart the IDE
+- restart the computer
+-------------------------------------------------------------------------------
+Display shows nothing (background light is on)?
+On the backside of the display you can try to change an adjusting screw (potentiometer) for contrast/brightness
+-------------------------------------------------------------------------------
+Coins where not calculated
+on the side of the coin selector is a which should be set to "fast". on the display of the coin acceptor
+the number of pulses (2..6) should be displayed when you feed a coin. If this is not the case the coin acceptor should be programmed again.
+-------------------------------------------------------------------------------
+some coins where not accepted
+programm the coin acceptor and choose a different sensitivity (e.g. set value F to 7 instead of 8). If this doesn't help you can collect two heaps of coins and 
+programm the ones working and the others separately. This means you have 6 instead of 5 different coins. Of course both coins with same values should be attached 
+to the same number of pulses
+-------------------------------------------------------------------------------
+I have faced a situation where the arduino doesn't calculated the coins correctly, in some cases values were displayed even when the coins have not been inserted.
+In this case I replaced the arduino by a new one - this helped.
+
+
+
+

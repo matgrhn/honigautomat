@@ -35,7 +35,7 @@ const int max = 5;
 // if maxrow <=2 the button #5 is used to start refill programm otherwise for open 3rd row during programming
 const int maxrow = 2;
 
-unsigned long idlePeriod = 180000; // time in ms between idle messages or shutdown e.g. 180000  
+unsigned long idlePeriod = 120000; // time in ms between idle messages or shutdown e.g. 180000  
 // powersave = 0 show text when Idle; powersave = 1 shutdown when IdlePeriod reached
 
 // debug modus: if you need 10 vendors and one additonal PIN (TX0 / Digital PIN 1 which should normally not be used) on UNO turn debug mode to 0 which disables serial 
@@ -58,7 +58,7 @@ const int configbutton = 5;   // 5 for Mega; 13 for Uno
 const int refillbutton = 3;  // 3 for Mega; for Uno 12 (if only one row of compartments exists: maxrow = 1)
 const int powersave_relais_pin = 4;  // 4 for Mega; for Uno 11
 // config
-const int powersave = 0;  // powersave = 1 -> turnoff power after idle threshold; run at least onetime with 0 to ensure correct data on eeprom
+const int powersave = 1;  // powersave = 1 -> turnoff power after idle threshold; run at least onetime with 0 to ensure correct data on eeprom
 
 // #### EEPROM structure
 //  0          -> 1           : version of this structure : 1 
@@ -67,20 +67,21 @@ const int powersave = 0;  // powersave = 1 -> turnoff power after idle threshold
 //  index * 2 + 4             : conveyorItems []
 //  index * 2 + max * 2 + 4   : conveyorPrice []
 
-const int EEPROM_version = 1;
+const int EEPROM_version = 2;
  
 
 // ########## INIT VALUES ##########
 // #max
 // #PREIS
 //int conveyorPrice[15] = {600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600}; // default price  
-int conveyorPrice[5] = {700, 700, 700, 700, 700}; // default price  
+int conveyorPrice[5] = {700, 700, 700, 1000, 1000}; // default price  
 //int conveyorItems[15] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 int conveyorItems[5] = {2, 2, 2, 2, 2};
 
 // ########## INIT COIN ACCEPTOR ##########
 
 const int coinInt = 0; // attach coinInt to interrupt pin 0 = digital pin 2 = digitalPinToInterrupt(2) . (interrupt pin 1 = digital pin 3 = digitalPinToInterrupt(3))
+//const int coinInt = 2; // attach coinInt to interrupt pin 0 = digital pin 2 = digitalPinToInterrupt(2) . (interrupt pin 1 = digital pin 3 = digitalPinToInterrupt(3))
 
 // set the coinsCurrentValue to a volatile float
 // volatile as this variable changes any time the Interrupt is triggered
@@ -130,12 +131,14 @@ if (debug) {
    if (debug) {
   Serial.println("Warten auf Muenzpruefer");
   }
-  delay(2000); // don't start main loop until we're sure that the coin selector has started
+  delay(3000); // don't start main loop until we're sure that the coin selector has started
 
   // if coinInt goes HIGH (a Pulse), call the coinInserted function
   // an attachInterrupt will always trigger, even if your using delays
   //  attachInterrupt(digitalPinToInterrupt(2), coinInserted, RISING);
   attachInterrupt(coinInt, coinInserted, RISING);
+//  attachInterrupt(digitalPinToInterrupt(coinInt), coinInserted, RISING);
+
 
 // Relais initialisieren
 
@@ -194,7 +197,7 @@ if (debug) {
   Serial.println("Bereit");
 }  
   lcd.clear();
-  lcd.print("Bereit");
+  lcd.print("Bereit.");
 }
 
 // ########## COIN INSERT ##########
@@ -331,11 +334,12 @@ else
   lcd.print("power off...");
   delay(2000);
   digitalWrite(poweroffrelais, LOW);
+  delay(5000);  
   // power relais not available?... continue..
   idleTimerMillis = millis();
   lcd.clear();
-    digitalWrite(poweroffrelais, HIGH);
-  lcd.print("Bereit..");
+  //  digitalWrite(poweroffrelais, HIGH);
+  lcd.print("Bereit.....");
   delay(2000);
  }
   }
@@ -476,7 +480,7 @@ if (debug) {
         displayConfPrice(index);
         delay(200);
       }
-      if (digitalRead(selector[1]) == LOW && conveyorPrice[index] < 1000) {
+      if (digitalRead(selector[1]) == LOW && conveyorPrice[index] < 2000) {
         conveyorPrice[index] = conveyorPrice[index] + 10;
         displayConfPrice(index);
         delay(200);
