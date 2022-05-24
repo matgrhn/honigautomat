@@ -9,6 +9,22 @@
 LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE); // Set the LCD I2C address MEGA2560 ; PIN 20 SDA, PIN 21SCL 
 //                    0x3F correct? see https://www.youtube.com/watch?v=B8DNokj9LnY
 
+// HD44780 compatible LCD display special characters
+#define UE "\365" // ü
+#define AE "\341" // ä
+#define OE "\357" // ö
+#define SZ "\342" // ß
+
+// EURO symbole
+byte euro[8] = {
+  B00110,
+  B01001,
+  B11100,
+  B01000,
+  B11100,
+  B01001,
+  B00110,
+};
 
 // ############ specific configurations ####################
 
@@ -24,7 +40,7 @@ unsigned long idlePeriod = 120000; // time in ms between idle messages or shutdo
 
 // debug modus: if you need 10 vendors and one additonal PIN (TX0 / Digital PIN 1 which should normally not be used) on UNO turn debug mode to 0 which disables serial 
 // I use this pin to send a message to my smarthome system for any purchased product
-bool debug = true;
+bool debug = false;
  //          if (!debug) {
           const int homematic_pin = 1;   
  //          }
@@ -80,8 +96,8 @@ int pulsecount;
 // const int relaisPin = xx; //
 //const int relays[10] = {3, 4, 5, 6, 7, 8, 9, 10 , 11, 12}; //uno: 10 boxes
 const int relays[15] = {22,24,26,28,30,32,34,36,38,40,42,44,46,48,50}; // mega: 15 boxes
-//const int poweroffrelais = 4;  // mega: 4; uno: only possible if less 10 compartments; in this case pin 12 recommended; remove this pin from relais list
-// poweroffrelais replaced by powersave_relais_pin
+const int poweroffrelais = 4;  // mega: 4; uno: only possible if less 10 compartments; in this case pin 12 recommended; remove this pin from relais list
+
 // ########## END OF INIT ##########
 
 // ########## SETUP ##########
@@ -99,14 +115,16 @@ if (debug) {
   pinMode(configbutton, INPUT_PULLUP);
   pinMode(refillbutton, INPUT_PULLUP);  
   pulsecount = 0;
-  digitalWrite(powersave_relais_pin, HIGH);
-  pinMode (powersave_relais_pin, OUTPUT);
+  digitalWrite(poweroffrelais, HIGH);
+  pinMode (poweroffrelais, OUTPUT);
 
-  digitalWrite(homematic_pin, HIGH);
-  pinMode (homematic_pin, OUTPUT);
+//           if (!debug) {  
+            digitalWrite(homematic_pin, HIGH);
+            pinMode (homematic_pin, OUTPUT);
            
+//           }
    
-
+  lcd.createChar(0, euro); // build € character
 
   lcd.begin(16, 2); // set up the LCD's number of columns and rows
   lcd.print("Bitte warten..."); // Print wait message to the LCD
@@ -135,14 +153,14 @@ digitalWrite(powersave_relais_pin,HIGH);
  if ((readEEPROM (0) != EEPROM_version) or (readEEPROM (2) != max))
  {
    if (debug) {
-    Serial.print("EEPROM_vers ");
-
+    Serial.print("Init EEPROM ");
+    Serial.print("EEPROM_version ");
     Serial.print (readEEPROM (0)); 
-    Serial.print("Emax ");
+    Serial.print("EEPROM_max ");
     Serial.print (readEEPROM (2)); 
-    Serial.print("PVer: ");
+    Serial.print("ProgVersion: ");
     Serial.print(EEPROM_version);  
-    Serial.print("PrMax: "); 
+    Serial.print("ProgMax: "); 
     Serial.println(max);   
    }    
     lcd.clear();
@@ -154,7 +172,7 @@ digitalWrite(powersave_relais_pin,HIGH);
   //  lcd.print(" max ");    
   //  lcd.print( max );   
   if (debug) {
-      Serial.print("writeEEprom.. ");     
+      Serial.print("writeEEprom erforderlich.. ");     
   }      
    writeEEPROMcomplete();
    if (debug) {
@@ -165,7 +183,7 @@ digitalWrite(powersave_relais_pin,HIGH);
  {
 // read EEPROM and update values
 if (debug) {
-  Serial.println("else:read EEPROM and upd");
+  Serial.println("else:read EEPROM and update values ");
 }  
  readEEPROMcomplete();
    
@@ -173,7 +191,7 @@ if (debug) {
    
  delay(200);
 coinsCurrentValue = 0;
-  lcd.print("Guthaben reset");
+  lcd.print("Guthaben loeschen.");
 delay(200);
 if (debug) {
   Serial.println("Bereit");
@@ -231,19 +249,17 @@ if (debug) {
 // Fach Öffnen
 void CompartementOpen(int j) {
 
-  detachInterrupt(coinInt);
+  
  if (debug) {
   Serial.print("Fachnummer ");
   Serial.print(j+1);
-  Serial.println(" oeffnen:");
+  Serial.println(" öffnen:");
  }
   //hier relais ansteuern
   
   digitalWrite(relays[j], LOW); // Fach öffnen
   delay(1000);
   digitalWrite(relays[j], HIGH); // Relais wieder aus
- delay(1000);
-  attachInterrupt(coinInt, coinInserted, RISING);  
 }
 
 // ########## LCD IDLE ##########
@@ -256,7 +272,7 @@ void idle() {
    
      idleTimerMillis = millis();     
      coinsCurrentValue = 0;
-     lcd.print("Guthaben reset...");
+     lcd.print("Guthaben loeschen...");
      delay(200);
      lcd.clear();
      lcd.print("Bereit..");
@@ -317,13 +333,13 @@ else
   lcd.setCursor(0, 0);
   lcd.print("power off...");
   delay(2000);
-   digitalWrite(powersave_relais_pin, LOW);
+  digitalWrite(poweroffrelais, LOW);
   delay(5000);  
   // power relais not available?... continue..
   idleTimerMillis = millis();
   lcd.clear();
-  digitalWrite(powersave_relais_pin, HIGH);
-  lcd.print("Bereit..");
+  //  digitalWrite(poweroffrelais, HIGH);
+  lcd.print("Bereit.....");
   delay(2000);
  }
   }
@@ -337,15 +353,13 @@ void set_values() {
   if (debug) {
   Serial.println("Gerätekonfiguration gestartet");
   }
-  
-    int scope = 0;
-for (int index = 0; index < max; index++) {
+  for (int index = 0; index < max; index++) {
      idleTimerMillis = millis();
       // set conveyor items
-    scope = 0;      
+    int scope = 0;
     int pass = index + 1;
    if (debug) {
-    Serial.print("Anz");
+    Serial.print("Anzahl");
     Serial.println(pass);
    }    
     lcd.clear();
@@ -362,7 +376,20 @@ for (int index = 0; index < max; index++) {
 if (debug) {
     Serial.print("scope ");
     Serial.println(scope);
-   
+    Serial.print("Setup Warenmenge");
+
+    Serial.print("digitalRead(selector[0] ");
+    Serial.println (digitalRead(selector[0])) ;
+    Serial.print("digitalRead(selector[1] ");
+    Serial.println (digitalRead(selector[1])) ;
+    Serial.print("digitalRead(selector[2] ");
+    Serial.println (digitalRead(selector[2])) ;
+    Serial.print("digitalRead(selector[3] ");
+    Serial.println (digitalRead(selector[3])) ;
+    Serial.print("digitalRead(selector[4] ");
+    Serial.println (digitalRead(selector[4])) ;
+
+    Serial.print("while schleife Anzahl def beginnt");
  }    
     while (scope == 0) {
       if (digitalRead(selector[0]) == LOW && conveyorItems[index] > 0) {
@@ -382,7 +409,7 @@ if (debug) {
       
       if (digitalRead(selector[3]) == LOW) {
 if (debug) {
-        Serial.print("alle oeffnen ");
+        Serial.print("alle Faecher öffnen ");
 }
         //if (maxrow == 1) {
            CompartementOpen(index);          
@@ -403,18 +430,18 @@ if (debug) {
         Serial.print("refill.. ");
  }        
            refill();  
-           scope = max + 1;           
+           scope = max;           
            delay(200);
       } //selector [4]
 
 
       if (digitalRead(selector[2]) == LOW) {
 if (debug) {        
-        Serial.print("Neue Anz: ");
+        Serial.print("Neue Anzahl: ");
         Serial.println(conveyorItems[index]);
 }
         scope++;
-        delay(400);
+        delay(200);
       } //selector [2]
     } // while (scope == 0)
 
@@ -422,16 +449,14 @@ if (debug) {
 
   // Setup Preise Button 1 = runterzählen, Button 2 = raufzählen in 10er Schritten, Button 3 = Ende und Anzeige
 if (debug) {
-  Serial.print("while Prs ");
+  Serial.print("while schleife Preise beginnt");
 }  
-if (scope <= max)
- {
   for (int index = 0; index < max; index++) {
     // sest conveyor prices
-    scope = 0;
+    int scope = 0;
     int pass = index + 1;
  if (debug) {
-    Serial.print("Preis Fach ");
+    Serial.print("Preis fuer Fach ");
     Serial.println(pass);
  }    
     lcd.clear();
@@ -440,7 +465,7 @@ if (scope <= max)
     lcd.print(pass);
     lcd.print(" Preis");
     lcd.setCursor(0, 1);
-    
+    lcd.write(byte(0)); // display EURO symbol
     lcd.print(" ");
     lcd.print(conveyorPrice[index] / 100.00);
     lcd.print("     ");
@@ -448,17 +473,17 @@ if (scope <= max)
       if (digitalRead(selector[0]) == LOW && conveyorPrice[index] >= 10) {
         conveyorPrice[index] = conveyorPrice[index] - 10;
         displayConfPrice(index);
-        delay(300);
+        delay(200);
       }
       if (digitalRead(selector[0]) == LOW && conveyorPrice[index] > 0 && conveyorPrice[index] < 10) {
         conveyorPrice[index] = 0;
         displayConfPrice(index);
-        delay(300);
+        delay(200);
       }
       if (digitalRead(selector[1]) == LOW && conveyorPrice[index] < 2000) {
         conveyorPrice[index] = conveyorPrice[index] + 10;
         displayConfPrice(index);
-        delay(300);
+        delay(200);
       }
       if (digitalRead(selector[2]) == LOW) {
   if (debug) {
@@ -466,8 +491,7 @@ if (scope <= max)
         Serial.println(conveyorPrice[index] / 100.00);
   }        
         scope++;
-        delay(400);
-   }
+        delay(200);
       }
     }
   }
@@ -475,11 +499,11 @@ if (scope <= max)
  coinsCurrentValue = 0;
  //displayBalance();
 if (debug) {  
-  Serial.println("Neu Eeprom.");
+  Serial.println("Neue Konfiguration ins Eeprom schreiben...");
 }  
   writeEEPROMcomplete();
 if (debug) {
-  Serial.println("Konf beendet");
+  Serial.println("Gerätekonfiguration beendet");
 }  
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -494,7 +518,7 @@ if (debug) {
 
 void refill() {
  if (debug) {
-  Serial.print(" Refill ");
+  Serial.print(" Refill gestartet ");
  }  
   lcd.clear();
 if (debug) {
@@ -505,9 +529,9 @@ if (debug) {
  for (int rindex = 0; rindex < max; rindex++) {
       lcd.clear();
       lcd.setCursor(0, 0);
-      lcd.print("Refill# ");
+      lcd.print("Refill Column ");
      if (debug) {
-      Serial.print("Refill Col ");
+      Serial.print("Refill Column ");
       Serial.print(rindex+1);
       Serial.print("conyeyorItems[rindex]: ");
       Serial.print(conveyorItems[rindex]);
@@ -529,7 +553,7 @@ if (debug) {
           
     if (( conveyorItems[rindex] == 1) and (maxrow > 1)) {
        if (debug) {
-          Serial.print("rindex + max ");
+          Serial.print("rindex plus max öffnen ");
        }          
           lcd.setCursor(0, 1);
           CompartementOpen(rindex + max); 
@@ -540,7 +564,7 @@ if (debug) {
 
     if (( conveyorItems[rindex] == 2) and (maxrow > 2)) {
         if (debug) {
-          Serial.print("rindex + 10 ");
+          Serial.print("rindex plus 10 öffnen ");
         }
           lcd.setCursor(0, 1);
           lcd.print (rindex+max + max +1);
@@ -555,7 +579,7 @@ if (debug) {
     lcd.clear();
     lcd.setCursor(0, 0);
     if (debug) {
-    Serial.println(" Refill ende. ");
+    Serial.println(" Refill beendet. ");
     lcd.print("Refill beendet.");
     }    
     delay(2000);
@@ -568,14 +592,14 @@ if (debug) {
 
 void displayBalance() {
   if (debug) {
-  Serial.print("Value:  ");
+  Serial.print("Guthaben:  ");
   Serial.println(coinsCurrentValue / 100.00);
   }  
   lcd.clear(); // reset LCD
   lcd.setCursor(0, 0);
   lcd.print("Guthaben");
   lcd.setCursor(0, 1); // set cursor to LCD row 2 column 1 (starting with 0)
-
+  lcd.write(byte(0)); // display EURO symbol
   lcd.print(" ");
   lcd.print(coinsCurrentValue / 100.00); // display current balance
 }
@@ -589,7 +613,7 @@ void displayPrice(int currentPrice) {
   lcd.setCursor(0, 0);
   lcd.print("Preis");
   lcd.setCursor(0, 1); // set cursor to LCD row 2 column 1 (starting with 0)
-
+  lcd.write(byte(0)); // display EURO symbol
   lcd.print(" ");
   lcd.print(currentPrice / 100.00);
   if (coinsCurrentValue > 0) {
@@ -600,13 +624,13 @@ void displayPrice(int currentPrice) {
 
 void displayEmpty() {
   if (debug) {
-  Serial.println("Fach leer");
+  Serial.println("Gewähltes Fach leer");
   }  
   lcd.clear(); // reset LCD
   lcd.setCursor(0, 0);
   lcd.print("Leider leer :(");
   lcd.setCursor(0, 1); // set cursor to LCD row 2 column 1 (starting with 0)
-  lcd.print("Bitte neu waehlen");
+  lcd.print("Bitte neu w" AE "hlen");
   if (coinsCurrentValue > 0) {
     delay(1000);
     displayBalance();
@@ -615,6 +639,7 @@ void displayEmpty() {
 
 void displayConfPrice(int con) {
   lcd.setCursor(0, 1);
+  lcd.write(byte(0)); // display EURO symbol
   lcd.print(" ");
   lcd.print(conveyorPrice[con] / 100.00);
   lcd.print("     ");
@@ -638,8 +663,8 @@ int readEEPROM (int address)
 void writeEEPROMcomplete ()
  { 
    if (debug) {
-    Serial.print("writeEEPcomp..");
-    Serial.print("vers ");
+    Serial.print("writeEEPROMcomplete..");
+    Serial.print("version ");
     Serial.print(EEPROM_version);  
     Serial.print("max "); 
     Serial.print(max);   
@@ -647,7 +672,7 @@ void writeEEPROMcomplete ()
    writeEPROM (0, EEPROM_version);
    writeEPROM (2, max);
    if (debug) {
-   Serial.print("write und max done.");
+   Serial.print("write eeprom version und max done.");
    }
     for (int index = 0; index < max; index++) {
 //    3          -> 4 + 2 * index : conveyorItems []
@@ -683,14 +708,14 @@ if (debug) {
 void readEEPROMcomplete ()
  { 
  if (debug) {
-    Serial.print("readEEPcompl..");
+    Serial.print("readEEPROMcomplete..");
  }    
 
  //   EEPROM_version = readEEPROM (0);
  //   max            = readEEPROM (2);
 
 if (debug) {    
-    Serial.print("vers ");
+    Serial.print("version ");
     Serial.print(EEPROM_version);  
     Serial.print("max "); 
     Serial.print(max);   
@@ -731,7 +756,7 @@ if (debug) {
     lcd.setCursor(0, 0);
     lcd.print("loaded. ");
     if (debug) {
-    Serial.print(" loaded EEPR. "); 
+    Serial.print(" loaded from EEPROM. "); 
     }    
     delay (200);
    
@@ -744,7 +769,7 @@ if (debug) {
 void loop() {
   if (digitalRead(configbutton) == LOW) {
 if (debug) {
-   Serial.print("DigitalRead(configb): LOW");
+   Serial.print("DigitalRead(configbutton): LOW");
 }
    set_values();
    delay(1000);
@@ -755,7 +780,6 @@ if (debug) {
    Serial.print("DigitalRead(refillbutton): LOW");
 }   
    refill();
- writeEEPROMcomplete(); 
    delay(1000);
   }  
 
@@ -812,7 +836,7 @@ if (debug) {
     }
           if ( conveyorItems[index] == 0) {
            if (debug) {
-          Serial.print("index open ");
+          Serial.print("index öffnen ");
            }
            CompartementOpen(index); }
           
@@ -824,7 +848,7 @@ if (debug) {
 
           if ( conveyorItems[index] == 2) {
            if (debug) {
-          Serial.print("index + 2 * max ");
+          Serial.print("index plus 2 * max öffnen ");
            }
           CompartementOpen(index + max + max); }
 
@@ -832,12 +856,14 @@ if (debug) {
           
           idleTimerMillis = millis(); // reset idle timer
 
+         if (!debug) {
 //          inform homematic about sold item only if serial.print not used (using digital pin1 which is dedicaded to serial) (issue with uno only)
-          delay(1000);
-          digitalWrite(homematic_pin, LOW); 
-          delay(1000);
-          digitalWrite(homematic_pin, HIGH); 
-          delay(200);
+            delay(1000);
+            digitalWrite(homematic_pin, LOW); 
+            delay(1000);
+            digitalWrite(homematic_pin, HIGH); 
+            delay(200);
+           }
         }
       } else {
         displayEmpty();
