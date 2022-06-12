@@ -199,13 +199,13 @@ if (debug) {
   pulsecount++;
 
 // new coin? start to count from beginning....   
-if (difference > 134 or difference < 50 ) {
+if (difference > 140 or difference < 50 ) {
     if (pulsecount > 1) {
        pulsecount = 1;
      }
    }
 
-if (difference < 135) {
+if (difference < 141) {
 switch (pulsecount) {
 case 2: coinsCurrentValue = coinsCurrentValue + 10;  
         break; 

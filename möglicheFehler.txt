@@ -20,7 +20,21 @@ to the same number of pulses
 -------------------------------------------------------------------------------
 I have faced a situation where the arduino doesn't calculated the coins correctly, in some cases values were displayed even when the coins have not been inserted.
 In this case I replaced the arduino by a new one - this helped.
+-------------------------------------------------------------------------------
+Some honey-vendors reported further issues with counting the coin, caused by slower coin-acceptors. If habe modified the sketch, alle impulses between 50 and 
+140 ms (instead of 135 ms which was the value before) are now applied as one coin. If you are using other coin acceptor hardware you should do some testing with serial monitor (set debug to true in the sketch
+before). Maybe this values need to be adapted.
 
+Here you see where it has to be changed (two numbers to be changed):
+...
+if (difference > 140 or difference < 50 ) {
+    if (pulsecount > 1) {
+       pulsecount = 1;
+     }
+   }
 
+if (difference < 141) {
+....
+-------------------------------------------------------------------------------
 
 
