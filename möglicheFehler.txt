@@ -1,3 +1,16 @@
+Great that you will use this concept. You want to support this project?
+
+Thanks for sending a tip to:
+
+https://www.paypal.me/MatthiasGruehn?locale.x=de_DE
+
+
+
+-------------------------------------------------------------------------------
+
+In Arduino-IDE it is maybe not possible to compile the sketch. It may help to integrate the library into your IDE. Search for "newliquidcrystal library with I2C download" at google
+and import into your IDE  (menue: sketch/include library/ ad .zip library)
+
 -------------------------------------------------------------------------------
 In Arduino-IDE maybe you see following issue when trying to upload the sketch: 
 Compilation error: Error: 3 INVALID_ARGUMENT: Missing FQBN (Fully Qualified Board Name)
