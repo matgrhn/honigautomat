@@ -52,7 +52,7 @@ If you want to run the system with a button for each compartment number of rows 
 
 ##################################################################################
 new feature with release 2 - powersave:
-after reaching idlePeriod relais "poweroffrelais" cuts the power; wakeup with poweron button (you need a separate self holding relais to keep power). See fritizing-documentation
+after reaching idlePeriod relais "poweroffrelais" cuts the power; wakeup with poweron button (you need a separate self holding relais to keep power). See fritzing-documentation
 This feature is active if powersave is set = 1 (otherwhise 0);
 ##################################################################################
 new feature with release 2 - write/read eeprom

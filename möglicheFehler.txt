@@ -23,7 +23,7 @@ Display shows nothing (background light is on)?
 On the backside of the display you can try to change an adjusting screw (potentiometer) for contrast/brightness
 -------------------------------------------------------------------------------
 Coins where not calculated
-on the side of the coin selector is a which should be set to "fast". on the display of the coin acceptor
+on the side of the coin selector is a switch which should be set to "fast". on the display of the coin acceptor
 the number of pulses (2..6) should be displayed when you feed a coin. If this is not the case the coin acceptor should be programmed again.
 -------------------------------------------------------------------------------
 some coins where not accepted
