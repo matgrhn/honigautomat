@@ -1,7 +1,15 @@
+
 what do you have to check and configure in the arduino sketch:
+
 Please check & update before you upload the sketch to your arduino.
 youtube channel containing a set of videos about this vendor machine:
 https://youtube.com/playlist?list=PLrYKRosgwf_19UN1uPkxFnaKNIluaASAk
+
+#********************************************************************************#
+are you interested in cashless payment (credit card or apple pay etc.) or 
+in payment with bill (Zahlung mit Geldscheinen)? Please send a mail.
+honigautmat@gmx.de
+#********************************************************************************#
 
 #################################################################################
 Depending on selected board (e.g. UNO or Mega 2560) and number of buttons=selector and compartments the pin definition must be adapted as follows.
@@ -63,7 +71,24 @@ To force an eeprom update in case of new structure (e.g. additional set compartm
 new feature with release 2 - reset credit after cutofftime = idle threshold
 remaining credit will be deleted after a while
 ##################################################################################
+new feature with release 3 - Jan 2023:
+it is possible to disable the coin acceptor when all products are sold out
+(mega only): connect PIN 17 with a free relais and lead power +12 for coin acceptor
+through this relais (function not yet visible in fritzing drawing)
 
+NV10 - bill acceptor now supported / der Geldscheinleser NV10 wird jetzt unterstützt
+
+Payment cashless with Nayax Onyx (you need additional hardware and a contract with
+Nayax for reconciliation/bank accounting; monthly fee & percentage to be paid.
+Zahlung per Kreditkarte mit Nayax Onyx (in Testphase) wird jetzt unterstützt. 
+Dafür wird zusätzliche Hardware sowie ein Supportvertrag mit Nayax benötigt. Dafür
+fallen (geringe) monatliche Gebühren sowie ein paar Prozente Abschlag bei Zahlung 
+an. Bei Interesse bitte mit mir Kontakt aufnehmen.
+
+#********************************************************************************#
+are you interested in cashless payment (credit card or apple pay etc.) or 
+in payment with bill (Zahlung mit Geldscheinen)? Please send a mail.
+#********************************************************************************#
 
 any questions? pls contact me: mailto:honigautomat@gmx.de
 Bei Fragen helfe ich gern weiter: honigautomat@gmx.de
