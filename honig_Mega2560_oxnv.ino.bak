@@ -355,7 +355,7 @@ if (nv10)
   digitalWrite(relays[j], LOW); // Fach öffnen
   delay(1000);
   digitalWrite(relays[j], HIGH); // Relais wieder aus
- delay(200);
+ delay(1000);
   attachInterrupt(coinInt, coinInserted, RISING);  
 // attach interrupts again if still products available 
  payment_on_off();
@@ -383,7 +383,7 @@ for (int avail_index = 0; avail_index < max; avail_index++) {
   lcd.setCursor(14, 0);
   //lcd.print(" av "); 
   lcd.print(available_products);  
- // delay (2000);
+  delay (2000);
  
  if (available_products > 0)
   {
@@ -395,17 +395,13 @@ lcd.clear();
    digitalWrite(coin_relais_pin,HIGH);
    pinMode(coin_relais_pin, OUTPUT);
    
-   delay (1000);
+   delay (2000);
 if (ox)    {
    digitalWrite(ox_inhibit_relais_pin,HIGH);
    pinMode(ox_inhibit_relais_pin, OUTPUT);
    attachInterrupt(digitalPinToInterrupt(ox_Int), ox_pulse, RISING);
    } // ox
 if (nv10) {
- if (debug) {
-      Serial.print("attachNV10 ");
-      }    
-    
    digitalWrite(nv10_ch1, LOW);
    pinMode (nv10_ch1, OUTPUT);
    digitalWrite(nv10_ch2, LOW);
@@ -427,7 +423,7 @@ displayBalance(); // display current balance
    digitalWrite(ox_inhibit_relais_pin,LOW);
    pinMode(ox_inhibit_relais_pin, OUTPUT);
    
-  // delay (1000);   
+   delay (1000);   
     } // ox
     if (nv10) {
     detachInterrupt(digitalPinToInterrupt(nv10_Int));
@@ -601,12 +597,6 @@ if (debug) {
            CompartementOpen(index+max+max);          
            delay(500);           
            } // maxrow ==3
- lcd.clear();
-           lcd.setCursor(0, 0);
-           lcd.print("Fach geoeffnet.");
-           lcd.setCursor(0, 1);
-           lcd.print("Bitte (3) druecken");
-           delay(200);
       } //selector [3]
        
       if (digitalRead(selector[4]) == LOW) {
@@ -697,13 +687,13 @@ if (debug) {
   lcd.print("Gespeichert");
   delay(200);
 
-//displayBalance();
+displayBalance();
   // check if products available and activate/deactivate payments systems
   
    payment_on_off ();
   coinsCurrentValue = 0;
   lcd.print("Guthaben reset....");
-  delay(2000);
+  delay(200);
   lcd.clear();
   displayBalance();
   
