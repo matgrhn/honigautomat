@@ -57,6 +57,38 @@ const int max = 5;
 int conveyorPrice[5] = {500, 500, 500, 500, 500}; // default value in ct
 
 If you want to run the system with a button for each compartment number of rows should be set to 1
+##################################################################################
+release 3
+
+please consider that for UNO the pin assignment is now different than before!
+**********************************************************************************
+new feature with release 3 - for UNO 
+check temperature with help of DS18B20 and turn cooling on/off 
+the usage is recommended in summer time (this feauture is on and power-save disabled when you connect pin "summer_pin" to GND).
+for winter disconnect this again.
+
+Temperature sensor DS18B20
+RED +5V
+BLACK GND (5V)
+YELLOW connect to pin "tempsensor" and via 4.7k ohm resistor with +5V
+
+##################################################################################
+NV10 - payment with bill now available for Mega 2560
+please note that electronic payment with Najax Onyx is not yet ready but dev started! (beta)
+
+int nv10_act = 13;
+connect this pin to GND to activate feature
+
+int nv10_ch1 = 9;   
+int nv10_ch2 = 10;
+connect to PIN 5 + 6 of NV10 to allow 5€ / 10€ (steering via sketch)
+
+NV10 PINs:
+1 connect to interrupt pin (arduino) and via 10kOhm to +5V
+5 see above
+6 see above
+14 GND 12V
+15 +12V (better turn on/off via coin acceptor relais "coin power") 
 
 ##################################################################################
 new feature with release 2 - powersave:

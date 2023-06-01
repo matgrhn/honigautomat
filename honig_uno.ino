@@ -1,15 +1,18 @@
 #include <Wire.h>
+#include <OneWire.h>
 #include <LCD.h>
 #include <LiquidCrystal_I2C.h>
 #include <EEPROM.h>
- 
+#include <DallasTemperature.h>
+
 // ########## INIT DISPLAY ##########
 
-// LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE); // Set the LCD I2C address UNO
-LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE); // Set the LCD I2C address MEGA2560 ; PIN 20 SDA, PIN 21SCL 
-//                    0x3F correct? see https://www.youtube.com/watch?v=B8DNokj9LnY
-
-
+LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE); // Set the LCD I2C address UNO
+   
+#define ONE_WIRE_BUS 9 //Data vom Temp.Sensor
+OneWire oneWire(ONE_WIRE_BUS);
+DallasTemperature sensors(&oneWire);
+   
 // ############ specific configurations ####################
 
 // max = number of buttons (default: 5; even with 1,2 or 3 rows of 5 compartments); if you want to have a button for each compartment increase up to 15 or more
@@ -17,88 +20,60 @@ LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE); // Set the LCD I2
 const int max = 5; 
 // number of rows (1 = 5 compartments, 2 = 10 compartments, 3 = 15 compartments)
 // if maxrow <=2 the button #5 is used to start refill programm otherwise for open 3rd row during programming
-const int maxrow = 2;
+const int maxrow = 1;
 
-unsigned long idlePeriod = 120000; // time in ms between idle messages or shutdown e.g. 180000  
+unsigned long idlePeriod = 150000; // time in ms between idle messages or shutdown e.g. 180000  
 // powersave = 0 show text when Idle; powersave = 1 shutdown when IdlePeriod reached
 
 // debug modus: if you need 10 vendors and one additonal PIN (TX0 / Digital PIN 1 which should normally not be used) on UNO turn debug mode to 0 which disables serial 
 // I use this pin to send a message to my smarthome system for any purchased product
 bool debug = true;
- //          if (!debug) {
-          const int homematic_pin = 1;   
- //          }
+ //     
+ //         const int homematic_pin = 1;   
+ //        
 unsigned long idleTimerMillis = 0;
 int randomNumber = 0;
-
-
-// ox cashless payment
-bool ox = false;
-int ox_credit_per_pulse = 50;
-// volatile int ox_coinsCurrentValue = 0;
-volatile int ox_difference = 0; 
-int ox_Change = 0; // a coin has been inserted flag
-unsigned long ox_currentMillis = 0;
-unsigned long ox_oldMillis = 0;
-volatile int ox_pulsecount = 0;
-int ox_inhibit_relais_pin = 11;
-int ox_act = 12 ;
-
-
-// nv10 cashless payment
-bool nv10 = false;
-int nv10_credit_per_pulse = 500;
-// volatile int nv10_coinsCurrentValue = 0;
-volatile int nv10_difference = 0; 
-int nv10_Change = 0; // a coin has been inserted flag
-unsigned long nv10_currentMillis = 0;
-unsigned long nv10_oldMillis = 0;
-volatile int nv10_pulsecount = 0;
-int nv10_act = 13;
-int nv10_ch1 = 9;
-int nv10_ch2 = 10;
-
-
 // ########## INIT BUTTONS ##########
 
-//const int selector[5] = {17, 16, 15, 14, 0 }; // input pins for selector buttons (A0=14, A1=15, A2=16, A3=17, Dig0=0) UNO
-//const int selector[15] = {A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15}; // input pins for selector buttons MEGA
-const int selector[5] = {A1, A2, A3, A4, A5}; // input pins for selector buttons MEGA 5 buttons and 5/10 or 15 boxes
+// uno
+const int selector[5] = {17 ,16 ,15, 14, 0}; // input pins for selector buttons 
 
-// ### don't uses dig1 PIN because it is related to the serial monitor and will causes issues with external periphery (UNO)
 // PINS
-const int configbutton = 5;   // 5 for Mega; 13 for Uno
-const int refillbutton = 3;  // 3 for Mega; for Uno 12 (if only one row of compartments exists: maxrow = 1)
-const int powersave_relais_pin = 4;  // 4 for Mega; for Uno 11
+const int configbutton = 13;   
+const int refillbutton = 12;  
+const int powersave_relais_pin = 11; 
+const int cooling_relais_pin = 10; 
+const int summer_pin = 8;
+
+bool summer = false;
 // config
-const int powersave = 1;  // powersave = 1 -> turnoff power after idle threshold; run at least onetime with 0 to ensure correct data on eeprom
+int powersave = 1;  // powersave = 1 -> turnoff power after idle threshold; run at least onetime with 0 to ensure correct data on eeprom
+// upd 5/23: per connect von pin8 auf UNO mit GND den Sommerbetrieb aktivieren, also kein Power-Off mehr, weil die Temperatur die Kühlung schalten soll
 
 // #### EEPROM structure
 //  0          -> 1           : version of this structure : 1 
 //  2          -> 3           : max = number of buttons
-//  4          ->            
+// 
 //  index * 2 + 4             : conveyorItems []
 //  index * 2 + max * 2 + 4   : conveyorPrice []
 
-const int EEPROM_version = 4;
- 
+const int EEPROM_version = 1;
 
 // ########## INIT VALUES ##########
 // #max
 // #PREIS
 //int conveyorPrice[15] = {600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600}; // default price  
-int conveyorPrice[5] = {700, 700, 700, 700, 700}; // default price  
+int conveyorPrice[5] = {600, 600, 600, 600, 600}; // default price  6
 //int conveyorItems[15] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-int conveyorItems[5] = {2, 2, 2, 2, 2};
+int conveyorItems[5] = {1, 1, 1, 1, 1};
+
+float temp_lower_threshold = 14.0;
+float temp_upper_threshold = 20.0;
+float temp_old = 99.0;
 
 // ########## INIT COIN ACCEPTOR ##########
 
 const int coinInt = 0; // attach coinInt to interrupt pin 0 = digital pin 2 = digitalPinToInterrupt(2) . (interrupt pin 1 = digital pin 3 = digitalPinToInterrupt(3))
-const int coin_relais_pin = 17;
-// ########## INIT Cashless payment ox interrupt ##############
-const int ox_Int = 18; // attach coinInt to interrupt pin 
-// ########## INIT bill payment nv10 interrupt ##############
-const int nv10_Int = 19; // attach nv10 to interrupt pin 
 
 // set the coinsCurrentValue to a volatile float
 // volatile as this variable changes any time the Interrupt is triggered
@@ -111,96 +86,98 @@ unsigned long oldMillis = 0;
 int pulsecount;
 
 // const int relaisPin = xx; //
+const int relays[5] = {3, 4, 5, 6, 7}; //uno: 5 or 10 boxes
 //const int relays[10] = {3, 4, 5, 6, 7, 8, 9, 10 , 11, 12}; //uno: 10 boxes
-const int relays[15] = {22,24,26,28,30,32,34,36,38,40,42,44,46,48,50}; // mega: 15 boxes
-//const int poweroffrelais = 4;  // mega: 4; uno: only possible if less 10 compartments; in this case pin 12 recommended; remove this pin from relais list
-// poweroffrelais replaced by powersave_relais_pin
+//const int relays[15] = {22,24,26,28,30,32,34,36,38,40,42,44,46,48,50}; // mega: 15 boxes
+
 // ########## END OF INIT ##########
 
 // ########## SETUP ##########
 
 void setup() {
 
+if (digitalRead(summer_pin) == LOW )
+    {
+  summer = true;
+  powersave = 0;    }  
+  else
+{
+  summer =  false; 
+ 
+    }
+
+ if (summer)
+ {
+   sensors.begin();
+  }
 if (debug) {
   Serial.begin(9600); // start serial communication
-  Serial.println("Setup gestartet");
+  Serial.println("Max: ");
+  Serial.println(max);
+  
+  if (summer){
+    Serial.print("Requesting temperatures...");
+    sensors.requestTemperatures(); // Send the command to get temperatures
+ //   Serial.println("DONE");
+    float tempC = sensors.getTempCByIndex(0);
+  // Check if reading was successful
+   if(tempC != DEVICE_DISCONNECTED_C) 
+   {
+    Serial.print("Temperature for the device 1 (index 0) is: ");
+    Serial.println(tempC);
+    lcd.setCursor(0,2);
+    lcd.print("Temp: ");
+    lcd.print(tempC);
+    lcd.print("\337C");
+    delay(1000);
+    lcd.clear();
+    temp_old = tempC;
+  } 
+  else
+  {
+    Serial.println("Error: Could not read temperature data");
   }
+  } // summer
+else
+{
+// winter
+    lcd.setCursor(0,2);
+    lcd.print("winter ");
+    delay(1000);
+    lcd.clear();
+}
+  }
+
  for (int index = 0; index < max; index++) {
    pinMode(selector[index], INPUT_PULLUP);
  }
  
   pinMode(configbutton, INPUT_PULLUP);
-  pinMode(refillbutton, INPUT_PULLUP);  
+  pinMode(refillbutton, INPUT_PULLUP);
+  pinMode(summer_pin, INPUT_PULLUP);  
   pulsecount = 0;
-  digitalWrite(powersave_relais_pin, HIGH);
-  pinMode (powersave_relais_pin, OUTPUT);
+  //digitalWrite(poweroffrelais, HIGH);
+  //pinMode (poweroffrelais, OUTPUT);
 
-  digitalWrite(homematic_pin, HIGH);
-  pinMode (homematic_pin, OUTPUT);
-
-   /// #### start coin acceptor & deactivate ox_inhibit
-  // payment_on_off ();
-      
+// 
+//            digitalWrite(homematic_pin, HIGH);
+//            pinMode (homematic_pin, OUTPUT);
+           
+//  
+   
   lcd.begin(16, 2); // set up the LCD's number of columns and rows
   lcd.print("Bitte warten..."); // Print wait message to the LCD
-   if (debug) {
-  Serial.println("Warten auf Muenzpruefer");
-  }
-  delay(500); // don't start main loop until we're sure that the coin selector has started
-
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  
     
-   
+  delay(1000);
+   if (debug) {
+  Serial.println("Warten Muenzpr");
+  }
+  delay(2000); // don't start main loop until we're sure that the coin selector has started
 
   // if coinInt goes HIGH (a Pulse), call the coinInserted function
   // an attachInterrupt will always trigger, even if your using delays
   //  attachInterrupt(digitalPinToInterrupt(2), coinInserted, RISING);
   attachInterrupt(coinInt, coinInserted, RISING);
- 
-  
-  pinMode(ox_act, INPUT_PULLUP);
-  if (digitalRead(ox_act) == LOW) {ox = true;} else {ox = false;}
-
-if (debug) {
- if (ox) {
-    Serial.print(" ox true ");
-    }
-    else
-    {
-    Serial.print(" ox false ");
-    }
-}     
-
-  pinMode(nv10_act, INPUT_PULLUP);
-  if (digitalRead(nv10_act) == LOW) {nv10 = true;} else {nv10 = false;}
-
-if (debug) {
- if (nv10) {
-    Serial.print(" nv10 true ");
-    }
-    else
-    {
-    Serial.print(" nv10 false ");
-    }
-}   
- 
-  lcd.clear();
-  lcd.setCursor(0, 1);
-  lcd.print("ox "); 
-  lcd.print(ox);  
-  lcd.print(" nv10 "); 
-  lcd.print(nv10);  
-  lcd.setCursor(0, 0);
-//  lcd.print(" av "); 
- // lcd.print(available_products);  
-  lcd.print(" mx "); 
-  lcd.print(max);  
-  lcd.print(" mxr "); 
-  lcd.print(maxrow);  
-  delay(200); 
-
 
 // Relais initialisieren
 
@@ -210,13 +187,17 @@ if (debug) {
  }
 
 digitalWrite(powersave_relais_pin,HIGH);
- pinMode(powersave_relais_pin, OUTPUT);
+pinMode(powersave_relais_pin, OUTPUT);
+
+digitalWrite(cooling_relais_pin,HIGH);
+pinMode(cooling_relais_pin, OUTPUT);
+
+
 
  if ((readEEPROM (0) != EEPROM_version) or (readEEPROM (2) != max))
  {
    if (debug) {
     Serial.print("EEPROM_vers ");
-
     Serial.print (readEEPROM (0)); 
     Serial.print("Emax ");
     Serial.print (readEEPROM (2)); 
@@ -234,7 +215,7 @@ digitalWrite(powersave_relais_pin,HIGH);
   //  lcd.print(" max ");    
   //  lcd.print( max );   
   if (debug) {
-      Serial.print("writeEEprom.. ");     
+      Serial.print("writeEEprom .. ");     
   }      
    writeEEPROMcomplete();
    if (debug) {
@@ -245,7 +226,7 @@ digitalWrite(powersave_relais_pin,HIGH);
  {
 // read EEPROM and update values
 if (debug) {
-  Serial.println(" else:read EEPROM and upd ");
+  Serial.println("else:read EEPROM upd ");
 }  
  readEEPROMcomplete();
    
@@ -253,20 +234,13 @@ if (debug) {
    
  delay(200);
 coinsCurrentValue = 0;
-  lcd.print("Guthaben reset");
+  lcd.print("Guthaben reset.");
 delay(200);
 if (debug) {
   Serial.println("Bereit");
 }  
   lcd.clear();
-  lcd.print("Bereit.");
- // if coinInt goes HIGH (a Pulse), call the coinInserted function
-  // an attachInterrupt will always trigger, even if your using delays
-  //  attachInterrupt(digitalPinToInterrupt(2), coinInserted, RISING);
-  attachInterrupt(coinInt, coinInserted, RISING);
-
-
-  payment_on_off ();
+  lcd.print("Bereit");
 }
 
 // ########## COIN INSERT ##########
@@ -312,143 +286,27 @@ if (debug) {
   Serial.println (  coinsCurrentValue);
 }
 }
-// ***************************************************************************************
-// Interesse an dem Modul für einen Geldscheinleser NV10 oder die Nutzung
-// von bargeldloser Zahlung mit Najay Onyx? 
-// Anfrage an: honigautomat@gmx.de 
-// Block A ab hier einfügen, vorher die folgenden 4 Zeilen löschen: ##########
-void ox_pulse() {}
-void ox_check() {}
-void nv10_pulse() {}
-void nv10_check() {}
-// Ende Block A              ###########
-// ***************************************************************************************
 
 // ########## Open Compartement ##########
 
 // Fach Öffnen
 void CompartementOpen(int j) {
 
-// detach interrupts to avoid impact (false ccountings)
-
-if (ox)   
- {
-   detachInterrupt(digitalPinToInterrupt(ox_Int));   
-    } // ox
-if (nv10) 
-    {
-    detachInterrupt(digitalPinToInterrupt(nv10_Int));
-     digitalWrite(nv10_ch1, HIGH);
-    pinMode (nv10_ch1, OUTPUT);
-    digitalWrite(nv10_ch2, HIGH);
-    pinMode (nv10_ch2, OUTPUT);
-    }
-  detachInterrupt(coinInt);
+detachInterrupt(coinInt);
+  
  if (debug) {
-  Serial.print("Fachnummer ");
+  Serial.print("Fach ");
   Serial.print(j+1);
   Serial.println(" oeffnen:");
  }
-  
- delay(100);
+  //hier relais ansteuern
   
   digitalWrite(relays[j], LOW); // Fach öffnen
-  delay(1000);
+  delay(500);
   digitalWrite(relays[j], HIGH); // Relais wieder aus
- delay(200);
+  delay(1000);
   attachInterrupt(coinInt, coinInserted, RISING);  
-// attach interrupts again if still products available 
- payment_on_off();
-}
-
-// ############## payment system on or off depending on if products still available
- 
- void payment_on_off () {
-if (debug) {
-    Serial.print("payment_on_off ");
-   }    
-  
- int available_products = 0;
-for (int avail_index = 0; avail_index < max; avail_index++) {
- available_products = available_products + conveyorItems[avail_index];
-  
-  }   
- if (debug)  
-   {
-    Serial.print("anz avail ");
-    Serial.print(available_products);
-   }  
- 
-  //lcd.clear();
-  lcd.setCursor(14, 0);
-  //lcd.print(" av "); 
-  lcd.print(available_products);  
- // delay (2000);
- 
- if (available_products > 0)
-  {
-lcd.clear();
-   lcd.setCursor(0, 0);  
-   lcd.print("Bitte warten.");
-   delay(1000);
-
-   digitalWrite(coin_relais_pin,HIGH);
-   pinMode(coin_relais_pin, OUTPUT);
-   
-   delay (1000);
-if (ox)    {
-   digitalWrite(ox_inhibit_relais_pin,HIGH);
-   pinMode(ox_inhibit_relais_pin, OUTPUT);
-   attachInterrupt(digitalPinToInterrupt(ox_Int), ox_pulse, RISING);
-   } // ox
-if (nv10) {
- if (debug) {
-      Serial.print("attachNV10 ");
-      }    
-    
-   digitalWrite(nv10_ch1, LOW);
-   pinMode (nv10_ch1, OUTPUT);
-   digitalWrite(nv10_ch2, LOW);
-   pinMode (nv10_ch2, OUTPUT);
-   attachInterrupt(digitalPinToInterrupt(nv10_Int), nv10_pulse, RISING);
-   if (debug) {
-      Serial.print("attachNV10 done");
-      }    
-   
-   }
-displayBalance(); // display current balance      
-
-   } //if available_products > 0
- else  //available_product == 0
- {   
-   if (ox)   
-   {
-   detachInterrupt(digitalPinToInterrupt(ox_Int));   
-   digitalWrite(ox_inhibit_relais_pin,LOW);
-   pinMode(ox_inhibit_relais_pin, OUTPUT);
-   
-  // delay (1000);   
-    } // ox
-    if (nv10) {
-    detachInterrupt(digitalPinToInterrupt(nv10_Int));
-    digitalWrite(nv10_ch1, HIGH);
-    pinMode (nv10_ch1, OUTPUT);
-    digitalWrite(nv10_ch2, HIGH);
-    pinMode (nv10_ch2, OUTPUT);
-    
-    }
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("Ware leer! ");
-    delay (5000);
-   digitalWrite(coin_relais_pin,LOW);
-   pinMode(coin_relais_pin, OUTPUT);       
-      
- }  // else
- 
  }
-
-
 
 // ########## LCD IDLE ##########
 
@@ -464,7 +322,6 @@ void idle() {
      delay(200);
      lcd.clear();
      lcd.print("Bereit..");
-     payment_on_off ();     
      
   }
   
@@ -522,12 +379,12 @@ else
   lcd.setCursor(0, 0);
   lcd.print("power off...");
   delay(2000);
-   digitalWrite(powersave_relais_pin, LOW);
-  delay(5000);  
-  // power relais not available?... continue..
+  digitalWrite(powersave_relais_pin, LOW);
+  delay(5000);   
+ // power relais not available?... continue..
   idleTimerMillis = millis();
   lcd.clear();
-  digitalWrite(powersave_relais_pin, HIGH);
+ // digitalWrite(powersave_relais_pin, HIGH);
   lcd.print("Bereit..");
   delay(2000);
  }
@@ -540,14 +397,13 @@ else
 
 void set_values() {
   if (debug) {
-  Serial.println("Gerätekonfiguration gestartet");
+  Serial.println("Konf");
   }
-  
-    int scope = 0;
-for (int index = 0; index < max; index++) {
+      int scope = 0;
+  for (int index = 0; index < max; index++) {
      idleTimerMillis = millis();
       // set conveyor items
-    scope = 0;      
+    scope = 0;
     int pass = index + 1;
    if (debug) {
     Serial.print("Anz");
@@ -555,23 +411,23 @@ for (int index = 0; index < max; index++) {
    }    
     lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.print("Fachnr. ");
+    lcd.print("Fach. ");
     lcd.print(pass);
-    lcd.print(" Anzahl ");
+    lcd.print(" Anz ");
     lcd.setCursor(0, 1);
     lcd.print(conveyorItems[index]);
     lcd.print("  ");
 
 
-    // Setup Warenmenge Button 1 = runterzählen, Button 2 = raufzählen, Button 3 = weiter, Button 4 = alle öffnen, Button 5 = refill (öffne alle leeren & setzte Werte)
+    // Setup Warenmenge Button 1 = runterzählen, Button 2 = raufzählen, Button 3 = weiter, Button 4 = alle öffnen, Button 5 = refill (öffne alle leeren & setze Werte)
 if (debug) {
     Serial.print("scope ");
     Serial.println(scope);
-   
- }    
+      }    
     while (scope == 0) {
       if (digitalRead(selector[0]) == LOW && conveyorItems[index] > 0) {
         conveyorItems[index] = conveyorItems[index] - 1;
+        lcd.clear();  
         lcd.setCursor(0, 1);
         lcd.print(conveyorItems[index]);
         lcd.print("   ");
@@ -579,6 +435,7 @@ if (debug) {
       } //selector [0]
       if (digitalRead(selector[1]) == LOW && conveyorItems[index] < 10) {
         conveyorItems[index] = conveyorItems[index] + 1;
+        lcd.clear();  
         lcd.setCursor(0, 1);
         lcd.print(conveyorItems[index]);
         lcd.print("   ");
@@ -601,12 +458,13 @@ if (debug) {
            CompartementOpen(index+max+max);          
            delay(500);           
            } // maxrow ==3
- lcd.clear();
+           lcd.clear();
            lcd.setCursor(0, 0);
            lcd.print("Fach geoeffnet.");
            lcd.setCursor(0, 1);
-           lcd.print("Bitte (3) druecken");
+           lcd.print("(3) druecken!");
            delay(200);
+
       } //selector [3]
        
       if (digitalRead(selector[4]) == LOW) {
@@ -614,6 +472,7 @@ if (debug) {
         Serial.print("refill.. ");
  }        
            refill();  
+           writeEEPROMcomplete();
            scope = max + 1;           
            delay(200);
       } //selector [4]
@@ -633,13 +492,14 @@ if (debug) {
 
   // Setup Preise Button 1 = runterzählen, Button 2 = raufzählen in 10er Schritten, Button 3 = Ende und Anzeige
 if (debug) {
-  Serial.print("while Prs ");
+  Serial.print("while Prs");
 }  
-if (scope <= max)
+ if (scope <= max)
  {
+
   for (int index = 0; index < max; index++) {
     // sest conveyor prices
-    scope = 0;
+     scope = 0;
     int pass = index + 1;
  if (debug) {
     Serial.print("Preis Fach ");
@@ -651,7 +511,6 @@ if (scope <= max)
     lcd.print(pass);
     lcd.print(" Preis");
     lcd.setCursor(0, 1);
-    
     lcd.print(" ");
     lcd.print(conveyorPrice[index] / 100.00);
     lcd.print("     ");
@@ -666,7 +525,7 @@ if (scope <= max)
         displayConfPrice(index);
         delay(300);
       }
-      if (digitalRead(selector[1]) == LOW && conveyorPrice[index] < 2000) {
+      if (digitalRead(selector[1]) == LOW && conveyorPrice[index] < 1000) {
         conveyorPrice[index] = conveyorPrice[index] + 10;
         displayConfPrice(index);
         delay(300);
@@ -678,10 +537,10 @@ if (scope <= max)
   }        
         scope++;
         delay(400);
-   }
       }
     }
   }
+  } 
 
  coinsCurrentValue = 0;
  //displayBalance();
@@ -697,16 +556,7 @@ if (debug) {
   lcd.print("Gespeichert");
   delay(200);
 
-//displayBalance();
-  // check if products available and activate/deactivate payments systems
-  
-   payment_on_off ();
-  coinsCurrentValue = 0;
-  lcd.print("Guthaben reset....");
-  delay(2000);
-  lcd.clear();
   displayBalance();
-  
 }
 
 // ########## Refill ##########
@@ -779,11 +629,9 @@ if (debug) {
     lcd.print("Refill beendet.");
     }    
     delay(2000);
-    payment_on_off ();
-coinsCurrentValue = 0;
-  lcd.print("Guthaben reset");
-  delay(200);
-  lcd.clear();    
+    coinsCurrentValue = 0;
+    lcd.print("Guthaben reset");
+    delay(200);
     lcd.clear();
     displayBalance();
     }
@@ -800,8 +648,7 @@ void displayBalance() {
   lcd.setCursor(0, 0);
   lcd.print("Guthaben");
   lcd.setCursor(0, 1); // set cursor to LCD row 2 column 1 (starting with 0)
-
-  lcd.print(" ");
+   lcd.print(" ");
   lcd.print(coinsCurrentValue / 100.00); // display current balance
 }
 
@@ -814,8 +661,7 @@ void displayPrice(int currentPrice) {
   lcd.setCursor(0, 0);
   lcd.print("Preis");
   lcd.setCursor(0, 1); // set cursor to LCD row 2 column 1 (starting with 0)
-
-  lcd.print(" ");
+   lcd.print(" ");
   lcd.print(currentPrice / 100.00);
   if (coinsCurrentValue > 0) {
     delay(200);
@@ -976,12 +822,12 @@ if (debug) {
    delay(1000);
   }
 
- if (digitalRead(refillbutton) == LOW) {
+if (digitalRead(refillbutton) == LOW) {
 if (debug) {   
    Serial.print("DigitalRead(refillbutton): LOW");
 }   
    refill();
- writeEEPROMcomplete(); 
+   writeEEPROMcomplete(); 
    delay(1000);
   }  
 
@@ -989,23 +835,10 @@ if (debug) {
 
   // check if a coin has been inserted
  if (coinsChange == 1) {
-   if (debug) {
-    Serial.print("CoinsChange ");
-   }    
    coinsChange = 0; // unflag that a coin has been inserted
    displayBalance(); // display current balance
   
   }
-
-   if (ox) {
-   ox_check();
-   }
-
-   if (nv10) {
-   nv10_check();
-   } 
-
-
 
   // ********** BUTTON PRESSED **********
 
@@ -1032,7 +865,7 @@ if (debug) {
           coinsCurrentValue = coinsCurrentValue - conveyorPrice[index]; // reduce balance
           conveyorItems[index]--; // reduce items
     if (debug) {
-    Serial.print("update EEPROM conveyorItem ");
+    Serial.print("update EEP conveyorItem ");
     Serial.print(index * 2 + 4, conveyorItems[index]);          
     }
           writeEPROM (index * 2 + 4, conveyorItems[index]);
@@ -1040,25 +873,24 @@ if (debug) {
             coinsCurrentValue = 0;  // correct float rounding error
           }
           delay(200);
-
-        //          which compartment to open?
-  
-
+   
+//          hier gehts weiter - welches Fach öffnen: oben oder unten, der Zähler wurde schon reduziert
+//          ist nicht interessant, wenn es für jedes Fach einen Knopf gibt; 
 if (debug) {
-    Serial.print("conveyorItems[index] ");
+    Serial.print("Items[index] ");
     Serial.print(conveyorItems[index]);
     Serial.print("index ");
     Serial.print(index);
     }
           if ( conveyorItems[index] == 0) {
            if (debug) {
-          Serial.print("index open ");
+          Serial.print("index open");
            }
            CompartementOpen(index); }
           
           if ( conveyorItems[index] == 1) {
           if (debug) {
-          Serial.print("index plus max öffnen ");
+          Serial.print("index + max ");
           }          
           CompartementOpen(index + max); }
 
@@ -1072,16 +904,14 @@ if (debug) {
           
           idleTimerMillis = millis(); // reset idle timer
 
-
-// turn off payment (coin acceptor or cashless system - ox ) if no further product available
-//   payment_on_off ();
-
+         if (!debug) {
 //          inform homematic about sold item only if serial.print not used (using digital pin1 which is dedicaded to serial) (issue with uno only)
-          delay(100);
-          digitalWrite(homematic_pin, LOW); 
-          delay(100);
-          digitalWrite(homematic_pin, HIGH); 
-          delay(200);
+//            delay(100);
+//            digitalWrite(homematic_pin, LOW); 
+//            delay(1000);
+//            digitalWrite(homematic_pin, HIGH); 
+            delay(200);
+           }
         }
       } else {
         displayEmpty();
@@ -1091,5 +921,55 @@ if (debug) {
     }
     
   }
+
+// check temperatur sensor
+if (summer)
+{
+  sensors.requestTemperatures(); // Send the command to get temperatures
+ // Serial.println("DONE");
+  float tempC = sensors.getTempCByIndex(0);
+  // Check if reading was successful
+  if(tempC != DEVICE_DISCONNECTED_C) 
+  {
+  if    ((temp_old > tempC) or (temp_old < tempC))
+ {
+  //  Serial.print("Temperature is: ");
+  //  Serial.println(tempC);
+  //  Serial.print("Temp_old is: ");
+  //  Serial.println(temp_old);
+    
+  //  temp_old = tempC;
+ }
+  } 
+  else
+  {
+    Serial.println("Error: Could not read temperature data");
+  }
+if    ((temp_old > tempC + 0.6) or (temp_old < tempC - 0.6))
+ {
+if (debug) {
+    Serial.print("Temperature is: ");
+    Serial.println(tempC);
+    idleTimerMillis = millis(); // reset idle timer
+}
+ if (tempC > temp_upper_threshold) {
+    if (debug) {
+    
+    Serial.print("Kühlung an ");
+    Serial.print (tempC);
+    idleTimerMillis = millis(); // reset idle timer
+    }   
+   digitalWrite(cooling_relais_pin,LOW);
+  }
+if (tempC < temp_lower_threshold) {
+    if (debug) {
+    Serial.print("Kühlung aus ");
+    Serial.print (tempC);  
+    }
+    digitalWrite(cooling_relais_pin,HIGH);
+    }
+    temp_old = tempC;
+    } // temp_old
+} // summer
 
 }

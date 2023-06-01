@@ -232,7 +232,7 @@ detachInterrupt(coinInt);
   //hier relais ansteuern
   
   digitalWrite(relays[j], LOW); // Fach öffnen
-  delay(1000);
+  delay(500);
   digitalWrite(relays[j], HIGH); // Relais wieder aus
   delay(1000);
   attachInterrupt(coinInt, coinInserted, RISING);  
@@ -357,17 +357,19 @@ if (debug) {
     while (scope == 0) {
       if (digitalRead(selector[0]) == LOW && conveyorItems[index] > 0) {
         conveyorItems[index] = conveyorItems[index] - 1;
+            lcd.clear();        
         lcd.setCursor(0, 1);
         lcd.print(conveyorItems[index]);
         lcd.print("   ");
-        delay(400);
+        delay(200);
       } //selector [0]
       if (digitalRead(selector[1]) == LOW && conveyorItems[index] < 10) {
         conveyorItems[index] = conveyorItems[index] + 1;
+        lcd.clear();        
         lcd.setCursor(0, 1);
         lcd.print(conveyorItems[index]);
         lcd.print("   ");
-        delay(400);
+        delay(200);
       } //selector [1]
       
       if (digitalRead(selector[3]) == LOW) {
@@ -386,6 +388,14 @@ if (debug) {
            CompartementOpen(index+max+max);          
            delay(500);           
            } // maxrow ==3
+
+           lcd.clear();
+           lcd.setCursor(0, 0);
+           lcd.print("Fach geoeffnet.");
+           lcd.setCursor(0, 1);
+           lcd.print("(3) druecken!");
+           delay(200);
+
       } //selector [3]
        
       if (digitalRead(selector[4]) == LOW) {
@@ -393,6 +403,7 @@ if (debug) {
         Serial.print("refill.. ");
  }        
            refill();  
+           writeEEPROMcomplete();           
            scope = max + 1;           
            delay(200);
       } //selector [4]
@@ -514,7 +525,7 @@ if (debug) {
           lcd.print (rindex+1); 
           CompartementOpen(rindex); 
           conveyorItems[rindex] ++;
-          delay(500);
+          delay(200);
                  }
           
     if (( conveyorItems[rindex] == 1) and (maxrow > 1)) {
@@ -525,7 +536,7 @@ if (debug) {
           CompartementOpen(rindex + max); 
           lcd.print (rindex+max +1); 
           conveyorItems[rindex] ++;          
-          delay(500);
+          delay(200);
           }
 
     if (( conveyorItems[rindex] == 2) and (maxrow > 2)) {
@@ -535,11 +546,11 @@ if (debug) {
           lcd.setCursor(0, 1);
           lcd.print (rindex+max + max +1);
           CompartementOpen(rindex + max + max); 
-          delay(500);
+          delay(200);
           conveyorItems[rindex] ++;
           }
          
-    delay(500);
+    delay(100);
     } 
     
     lcd.clear();
@@ -549,6 +560,10 @@ if (debug) {
     lcd.print("Refill beendet.");
     }    
     delay(2000);
+ 
+    coinsCurrentValue = 0;
+    lcd.print("Guthaben reset");
+    delay(200);
     lcd.clear();
     displayBalance();
     }
@@ -581,7 +596,7 @@ void displayPrice(int currentPrice) {
    lcd.print(" ");
   lcd.print(currentPrice / 100.00);
   if (coinsCurrentValue > 0) {
-    delay(1000);
+    delay(200);
     displayBalance();
   }
 }
@@ -663,6 +678,7 @@ if (debug) {
     lcd.setCursor(0, 0);
     lcd.print("saved. ");
     delay (200);
+    displayBalance();
    
 
   }
@@ -822,7 +838,7 @@ if (debug) {
 
          if (!debug) {
 //          inform homematic about sold item only if serial.print not used (using digital pin1 which is dedicaded to serial) (issue with uno only)
-//            delay(1000);
+//            delay(100);
 //            digitalWrite(homematic_pin, LOW); 
 //            delay(1000);
 //            digitalWrite(homematic_pin, HIGH); 
