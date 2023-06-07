@@ -17,7 +17,7 @@ LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE); // Set the LCD I2
 const int max = 5; 
 // number of rows (1 = 5 compartments, 2 = 10 compartments, 3 = 15 compartments)
 // if maxrow <=2 the button #5 is used to start refill programm otherwise for open 3rd row during programming
-const int maxrow = 2;
+const int maxrow = 3;
 
 unsigned long idlePeriod = 120000; // time in ms between idle messages or shutdown e.g. 180000  
 // powersave = 0 show text when Idle; powersave = 1 shutdown when IdlePeriod reached
@@ -62,8 +62,8 @@ int nv10_ch2 = 10;
 // ########## INIT BUTTONS ##########
 
 //const int selector[5] = {17, 16, 15, 14, 0 }; // input pins for selector buttons (A0=14, A1=15, A2=16, A3=17, Dig0=0) UNO
-//const int selector[15] = {A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15}; // input pins for selector buttons MEGA
-const int selector[5] = {A1, A2, A3, A4, A5}; // input pins for selector buttons MEGA 5 buttons and 5/10 or 15 boxes
+const int selector[15] = {A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15}; // input pins for selector buttons MEGA
+//const int selector[5] = {A1, A2, A3, A4, A5}; // input pins for selector buttons MEGA 5 buttons and 5/10 or 15 boxes
 
 // ### don't uses dig1 PIN because it is related to the serial monitor and will causes issues with external periphery (UNO)
 // PINS
@@ -80,16 +80,16 @@ const int powersave = 1;  // powersave = 1 -> turnoff power after idle threshold
 //  index * 2 + 4             : conveyorItems []
 //  index * 2 + max * 2 + 4   : conveyorPrice []
 
-const int EEPROM_version = 3;
+const int EEPROM_version = 2;
  
 
 // ########## INIT VALUES ##########
 // #max
 // #PREIS
-//int conveyorPrice[15] = {600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600}; // default price  
+//int conveyorPrice[15] = {700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700}; // default price  
 int conveyorPrice[5] = {700, 700, 700, 700, 700}; // default price  
 //int conveyorItems[15] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-int conveyorItems[5] = {2, 2, 2, 2, 2};
+int conveyorItems[5] = {3, 3, 3, 3, 3};
 
 // ########## INIT COIN ACCEPTOR ##########
 
@@ -186,6 +186,14 @@ if (debug) {
     }
 }   
  
+if (nv10) {
+ nv10_oldMillis = millis();
+ if (debug) {
+      Serial.print(" nv10_oldMillis ");
+      Serial.print(nv10_oldMillis);
+ }
+ 
+}
   lcd.clear();
   lcd.setCursor(0, 1);
   lcd.print("ox "); 
@@ -251,9 +259,9 @@ if (debug) {
    
  }
    
- delay(200);
+ //delay(200);
 coinsCurrentValue = 0;
-  lcd.print("Guthaben reset");
+lcd.print("Guthaben reset");
 delay(200);
 if (debug) {
   Serial.println("Bereit");
@@ -312,22 +320,96 @@ if (debug) {
   Serial.println (  coinsCurrentValue);
 }
 }
-// ***************************************************************************************
-// Interesse an dem Modul für einen Geldscheinleser NV10 oder die Nutzung
-// von bargeldloser Zahlung mit Najay Onyx? 
-// Anfrage an: honigautomat@gmx.de 
-// Block A ab hier einfügen, vorher die folgenden 4 Zeilen löschen: ##########
-void ox_pulse() {}
-void ox_check() {}
-void nv10_pulse() {}
-void nv10_check() {}
-// Ende Block A              ###########
-// ***************************************************************************************
+
+
+// ########## OX PULSE - cashless payment ##########
+
+// This function is called by interrupt every time we receives a pulse from the coin acceptor
+void ox_pulse() {
+ox_Change = 1; // flag that there has been cashless payment done
+ox_pulsecount++;
+if (debug) {    
+  Serial.print ("(/ox_pulse) neuer Wert: ");
+  Serial.println (  ox_pulsecount);
+}
+}
+
+// ########## OX Check - process cashless payment ##########
+void ox_check() {
+if (ox_Change == 1) {
+  if (debug) {    
+    Serial.print ("(/ox_Change: ");
+    Serial.println (  ox_Change);
+    }     
+    if  (ox_Change > 0)  {
+     ox_currentMillis = millis();
+     ox_difference = ox_currentMillis - ox_oldMillis;
+     if ((ox_difference > 150 )  ) {
+     ox_Change = 0; // unflag that a cashless payment has been done
+     coinsCurrentValue = coinsCurrentValue + ox_pulsecount * ox_credit_per_pulse;
+     ox_pulsecount = 0;
+     ox_oldMillis   = ox_currentMillis;
+     displayBalance(); // display current balance
+       if (debug) {    
+         Serial.print ("ox_pulsecount reset ");
+        }
+       }   
+      }
+     }
+}
+
+// ########## nv10 PULSE - bill payment ##########
+
+// This function is called by interrupt every time we receives a pulse from the bill acceptor
+void nv10_pulse() {
+nv10_Change = 1; // flag that there has been cashless payment done
+nv10_pulsecount++;
+if (debug) {    
+  Serial.print ("(/nv10_pulse) neuer Wert: ");
+  Serial.println (  nv10_pulsecount);
+}
+}
+
+// ########## nv10 Check - process bill payment ##########
+void nv10_check() {
+ 
+    if  (nv10_Change > 0)  {
+     nv10_currentMillis = millis();
+     nv10_difference = nv10_currentMillis - nv10_oldMillis;
+     if ((nv10_difference > 150 )  ) {
+     nv10_Change = 0; // unflag that a cashless payment has been done
+     coinsCurrentValue = coinsCurrentValue + nv10_pulsecount * nv10_credit_per_pulse;
+     nv10_pulsecount = 0;
+     nv10_oldMillis  = nv10_currentMillis;     
+     displayBalance(); // display current balance
+       if (debug) {    
+         Serial.print ("nv10_pulsecount reset ");
+        }
+       }   
+      }
+
+}
+
 
 // ########## Open Compartement ##########
 
 // Fach Öffnen
 void CompartementOpen(int j) {
+
+// detach interrupts to avoid impact (false ccountings)
+
+if (ox)   
+ {
+   detachInterrupt(digitalPinToInterrupt(ox_Int));   
+    } // ox
+if (nv10) 
+    {
+    detachInterrupt(digitalPinToInterrupt(nv10_Int));
+    digitalWrite(nv10_ch1, HIGH);
+    pinMode (nv10_ch1, OUTPUT);
+    digitalWrite(nv10_ch2, HIGH);
+    pinMode (nv10_ch2, OUTPUT);
+    }
 
   detachInterrupt(coinInt);
  if (debug) {
@@ -335,18 +417,28 @@ void CompartementOpen(int j) {
   Serial.print(j+1);
   Serial.println(" oeffnen:");
  }
-  //hier relais ansteuern
-  
+ 
+ // lcd.clear();
+ // lcd.setCursor(0, 0);  
+ // lcd.print("Bitte warten.");
+  delay(100);
+ 
   digitalWrite(relays[j], LOW); // Fach öffnen
-  delay(1000);
+  delay(500);
   digitalWrite(relays[j], HIGH); // Relais wieder aus
  delay(1000);
   attachInterrupt(coinInt, coinInserted, RISING);  
+// attach interrupts again if still products available 
+ payment_on_off();
 }
 
 // ############## payment system on or off depending on if products still available
  
  void payment_on_off () {
+   if (debug) {
+    Serial.print("payment_on_off ");
+   }    
+  
  int available_products = 0;
 for (int avail_index = 0; avail_index < max; avail_index++) {
  available_products = available_products + conveyorItems[avail_index];
@@ -362,27 +454,41 @@ for (int avail_index = 0; avail_index < max; avail_index++) {
   lcd.setCursor(14, 0);
   //lcd.print(" av "); 
   lcd.print(available_products);  
-  delay (2000);
+  //delay (2000);
  
  if (available_products > 0)
   {
+   lcd.clear();
+   lcd.setCursor(0, 0);  
+   lcd.print("Bitte warten.");
+ //  delay(100);
+
    digitalWrite(coin_relais_pin,HIGH);
    pinMode(coin_relais_pin, OUTPUT);
    
-   delay (1000);
+ //  delay (500);
 if (ox)    {
    digitalWrite(ox_inhibit_relais_pin,HIGH);
    pinMode(ox_inhibit_relais_pin, OUTPUT);
    attachInterrupt(digitalPinToInterrupt(ox_Int), ox_pulse, RISING);
    } // ox
 if (nv10) {
+   if (debug) {
+      Serial.print("attachNV10 ");
+      }    
+    
    digitalWrite(nv10_ch1, LOW);
    pinMode (nv10_ch1, OUTPUT);
    digitalWrite(nv10_ch2, LOW);
    pinMode (nv10_ch2, OUTPUT);
    attachInterrupt(digitalPinToInterrupt(nv10_Int), nv10_pulse, RISING);
+   if (debug) {
+      Serial.print("attachNV10 done");
+      }    
    
    }
+
+  displayBalance(); // display current balance      
 
    } //if available_products > 0
  else  //available_product == 0
@@ -393,7 +499,7 @@ if (nv10) {
    digitalWrite(ox_inhibit_relais_pin,LOW);
    pinMode(ox_inhibit_relais_pin, OUTPUT);
    
-   delay (1000);   
+ //  delay (1000);   
     } // ox
     if (nv10) {
     detachInterrupt(digitalPinToInterrupt(nv10_Int));
@@ -411,6 +517,7 @@ if (nv10) {
    pinMode(coin_relais_pin, OUTPUT);       
       
  }  // else
+ 
  
  }
 
@@ -430,7 +537,8 @@ void idle() {
      delay(200);
      lcd.clear();
      lcd.print("Bereit..");
-     payment_on_off ();     
+     payment_on_off ();    
+//     displayBalance(); // display current balance      
      
   }
   
@@ -538,6 +646,7 @@ if (debug) {
     while (scope == 0) {
       if (digitalRead(selector[0]) == LOW && conveyorItems[index] > 0) {
         conveyorItems[index] = conveyorItems[index] - 1;
+        lcd.clear();        
         lcd.setCursor(0, 1);
         lcd.print(conveyorItems[index]);
         lcd.print("   ");
@@ -545,6 +654,7 @@ if (debug) {
       } //selector [0]
       if (digitalRead(selector[1]) == LOW && conveyorItems[index] < 10) {
         conveyorItems[index] = conveyorItems[index] + 1;
+        lcd.clear();        
         lcd.setCursor(0, 1);
         lcd.print(conveyorItems[index]);
         lcd.print("   ");
@@ -567,6 +677,14 @@ if (debug) {
            CompartementOpen(index+max+max);          
            delay(500);           
            } // maxrow ==3
+
+           lcd.clear();
+           lcd.setCursor(0, 0);
+           lcd.print("Fach geoeffnet.");
+           lcd.setCursor(0, 1);
+           lcd.print("(3) druecken!");
+           delay(200);
+
       } //selector [3]
        
       if (digitalRead(selector[4]) == LOW) {
@@ -574,6 +692,7 @@ if (debug) {
         Serial.print("refill.. ");
  }        
            refill();  
+           writeEEPROMcomplete();           
            scope = max + 1;           
            delay(200);
       } //selector [4]
@@ -657,16 +776,14 @@ if (debug) {
   lcd.print("Gespeichert");
   delay(200);
 
-  // check if products available and activate/deactivate payments systems
-  
-   payment_on_off ();
+   // check if products available and activate/deactivate payments systems
+  payment_on_off ();
   coinsCurrentValue = 0;
   lcd.print("Guthaben reset....");
   delay(200);
   lcd.clear();
   displayBalance();
-  
-}
+  }
 
 // ########## Refill ##########
 // open all empty boxes and set their value to maxrow
@@ -703,7 +820,7 @@ if (debug) {
           lcd.print (rindex+1); 
           CompartementOpen(rindex); 
           conveyorItems[rindex] ++;
-          delay(500);
+          delay(200);
                  }
           
     if (( conveyorItems[rindex] == 1) and (maxrow > 1)) {
@@ -714,7 +831,7 @@ if (debug) {
           CompartementOpen(rindex + max); 
           lcd.print (rindex+max +1); 
           conveyorItems[rindex] ++;          
-          delay(500);
+          delay(200);
           }
 
     if (( conveyorItems[rindex] == 2) and (maxrow > 2)) {
@@ -724,11 +841,11 @@ if (debug) {
           lcd.setCursor(0, 1);
           lcd.print (rindex+max + max +1);
           CompartementOpen(rindex + max + max); 
-          delay(500);
+          delay(200);
           conveyorItems[rindex] ++;
           }
          
-    delay(500);
+    delay(100);
     } 
     
     lcd.clear();
@@ -739,6 +856,10 @@ if (debug) {
     }    
     delay(2000);
     payment_on_off ();
+    coinsCurrentValue = 0;
+    lcd.print("Guthaben reset");
+    delay(200);
+
     lcd.clear();
     displayBalance();
     }
@@ -773,7 +894,7 @@ void displayPrice(int currentPrice) {
   lcd.print(" ");
   lcd.print(currentPrice / 100.00);
   if (coinsCurrentValue > 0) {
-    delay(1000);
+    delay(200);
     displayBalance();
   }
 }
@@ -855,6 +976,7 @@ if (debug) {
     lcd.setCursor(0, 0);
     lcd.print("saved. ");
     delay (200);
+ displayBalance();
    
 
   }
@@ -938,13 +1060,18 @@ if (debug) {
  writeEEPROMcomplete(); 
    delay(1000);
   }  
-
+//if (debug) {
+//    Serial.print("idle ");
+// }    
   idle();
 
   // check if a coin has been inserted
  if (coinsChange == 1) {
-  
+  if (debug) {
+    Serial.print("CoinsChange ");
+   }    
    coinsChange = 0; // unflag that a coin has been inserted
+
    displayBalance(); // display current balance
   
   }
@@ -954,13 +1081,16 @@ if (debug) {
    }
 
    if (nv10) {
+  //   if (debug) {
+  //  Serial.print("nv10check ");
+ //  }    
+  
    nv10_check();
    } 
 
 
 
   // ********** BUTTON PRESSED **********
-
 
  // wenn nur 5 Button, dann Index kleiner max
  // for (int index = 0; index <= 4; index++) {
@@ -992,11 +1122,8 @@ if (debug) {
             coinsCurrentValue = 0;  // correct float rounding error
           }
           delay(200);
-
-        
-  
-//          hier gehts weiter - welches Fach öffnen: oben oder unten, der Zähler wurde schon reduziert
-//          ist nicht interessant, wenn es für jedes Fach einen Knopf gibt; 
+      
+//          which compartment to open?
 if (debug) {
     Serial.print("conveyorItems[index] ");
     Serial.print(conveyorItems[index]);
@@ -1007,32 +1134,27 @@ if (debug) {
            if (debug) {
           Serial.print("index open ");
            }
-           CompartementOpen(index); }
-          
+           CompartementOpen(index); }   
           if ( conveyorItems[index] == 1) {
           if (debug) {
           Serial.print("index plus max öffnen ");
           }          
           CompartementOpen(index + max); }
-
           if ( conveyorItems[index] == 2) {
            if (debug) {
           Serial.print("index + 2 * max ");
            }
           CompartementOpen(index + max + max); }
-
           displayBalance(); // display current balance
-          
           idleTimerMillis = millis(); // reset idle timer
 
-
 // turn off payment (coin acceptor or cashless system - ox ) if no further product available
-   payment_on_off ();
+// ??         payment_on_off ();
 
 //          inform homematic about sold item only if serial.print not used (using digital pin1 which is dedicaded to serial) (issue with uno only)
-          delay(1000);
+          delay(100);
           digitalWrite(homematic_pin, LOW); 
-          delay(1000);
+          delay(100);
           digitalWrite(homematic_pin, HIGH); 
           delay(200);
         }
