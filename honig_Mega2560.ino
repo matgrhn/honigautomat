@@ -1,4 +1,6 @@
 #include <Wire.h>
+
+
 #include <LCD.h>
 #include <LiquidCrystal_I2C.h>
 #include <EEPROM.h>
@@ -46,8 +48,18 @@ int ox_act = 12 ;
 
 
 // nv10 cashless payment
+// NV10 - payment with bill now available for Mega 2560
+
+// DIPs on NV10:
+// 1 LOW
+// 2 HIGH (this has been changed recently!)
+// 3 LOW
+// 4 HIGH
+// DIP2 on HIGH to get 4 pulses instead of 1 because in some installations compartment opening impacted the pulse interrupt. Now all pulses less 4 are ignored.
+// credit per pulse is now 125 instead of 500
+
 bool nv10 = false;
-int nv10_credit_per_pulse = 500;
+int nv10_credit_per_pulse = 125;
 // volatile int nv10_coinsCurrentValue = 0;
 volatile int nv10_difference = 0; 
 int nv10_Change = 0; // a coin has been inserted flag
@@ -344,11 +356,12 @@ if (ox_Change == 1) {
     if  (ox_Change > 0)  {
      ox_currentMillis = millis();
      ox_difference = ox_currentMillis - ox_oldMillis;
+     ox_oldMillis   = ox_currentMillis;
      if ((ox_difference > 150 )  ) {
      ox_Change = 0; // unflag that a cashless payment has been done
      coinsCurrentValue = coinsCurrentValue + ox_pulsecount * ox_credit_per_pulse;
      ox_pulsecount = 0;
-     ox_oldMillis   = ox_currentMillis;
+
      displayBalance(); // display current balance
        if (debug) {    
          Serial.print ("ox_pulsecount reset ");
@@ -364,32 +377,55 @@ if (ox_Change == 1) {
 void nv10_pulse() {
 nv10_Change = 1; // flag that there has been cashless payment done
 nv10_pulsecount++;
+nv10_currentMillis = millis();
+ int nv10_difference = nv10_currentMillis - nv10_oldMillis;
+     
+nv10_oldMillis  = nv10_currentMillis; 
+
 if (debug) {    
   Serial.print ("(/nv10_pulse) neuer Wert: ");
   Serial.println (  nv10_pulsecount);
+  Serial.print ("(/nv10_pulse) nv10_difference: ");
+  Serial.println (  nv10_difference);
+}
+
+// new bill? start to count from beginning
+ if (nv10_difference > 310)
+ {
+   if (nv10_pulsecount > 1)
+   {
+     nv10_pulsecount = 1;
+   }
+ } // diff > 140
+
+ if (nv10_difference < 309)
+ {
+
+switch (nv10_pulsecount) {
+case 4: coinsCurrentValue  = coinsCurrentValue + nv10_pulsecount * nv10_credit_per_pulse;  
+        nv10_pulsecount    = 0;
+        break; 
+case 8: coinsCurrentValue  = coinsCurrentValue + nv10_pulsecount * nv10_credit_per_pulse;  
+        nv10_pulsecount    = 0;
+        break; 
+case 12: coinsCurrentValue = coinsCurrentValue + nv10_pulsecount * nv10_credit_per_pulse;
+        nv10_pulsecount    = 0;
+        break; 
+   } // switch
+
+
+ }
+if (debug) {    
+  Serial.print ("(/nv10_pulse) coinsCurrentValue ");
+  Serial.println (  coinsCurrentValue);
+  Serial.print ("(/nv10_pulse) nv10_difference: ");
+  Serial.println (  nv10_difference);
 }
 }
 
-// ########## nv10 Check - process bill payment ##########
-void nv10_check() {
+
  
-    if  (nv10_Change > 0)  {
-     nv10_currentMillis = millis();
-     nv10_difference = nv10_currentMillis - nv10_oldMillis;
-     if ((nv10_difference > 150 )  ) {
-     nv10_Change = 0; // unflag that a cashless payment has been done
-     coinsCurrentValue = coinsCurrentValue + nv10_pulsecount * nv10_credit_per_pulse;
-     nv10_pulsecount = 0;
-     nv10_oldMillis  = nv10_currentMillis;     
-     displayBalance(); // display current balance
-       if (debug) {    
-         Serial.print ("nv10_pulsecount reset ");
-        }
-       }   
-      }
-
-}
-
+   
 
 // ########## Open Compartement ##########
 
@@ -1076,17 +1112,24 @@ if (debug) {
   
   }
 
+
+
+// check if a bill has been inserted
+ if (nv10_Change == 1) {
+  if (debug) {
+    Serial.print("NV10_Change ");
+   }    
+   nv10_Change = 0; // unflag that a coin has been inserted
+
+   displayBalance(); // display current balance
+  
+  }
+
+
    if (ox) {
    ox_check();
    }
 
-   if (nv10) {
-  //   if (debug) {
-  //  Serial.print("nv10check ");
- //  }    
-  
-   nv10_check();
-   } 
 
 
 

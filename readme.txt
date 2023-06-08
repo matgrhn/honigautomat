@@ -74,6 +74,16 @@ YELLOW connect to pin "tempsensor" and via 4.7k ohm resistor with +5V
 
 ##################################################################################
 NV10 - payment with bill now available for Mega 2560
+
+DIPs on NV10:
+1 LOW
+2 HIGH (this has been changed recently!)
+3 LOW
+4 HIGH
+
+DIP2 on HIGH to get 4 pulses instead of 1 because in some installations compartment opening impacted the pulse interrupt. Now all pulses less 4 are ignored.
+
+
 please note that electronic payment with Najax Onyx is not yet ready but dev started! (beta)
 
 int nv10_act = 13;
