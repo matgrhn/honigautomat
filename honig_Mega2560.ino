@@ -1,6 +1,4 @@
 #include <Wire.h>
-
-
 #include <LCD.h>
 #include <LiquidCrystal_I2C.h>
 #include <EEPROM.h>
@@ -19,7 +17,7 @@ LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE); // Set the LCD I2
 const int max = 5; 
 // number of rows (1 = 5 compartments, 2 = 10 compartments, 3 = 15 compartments)
 // if maxrow <=2 the button #5 is used to start refill programm otherwise for open 3rd row during programming
-const int maxrow = 3;
+const int maxrow = 2;
 
 unsigned long idlePeriod = 120000; // time in ms between idle messages or shutdown e.g. 180000  
 // powersave = 0 show text when Idle; powersave = 1 shutdown when IdlePeriod reached
@@ -36,7 +34,7 @@ int randomNumber = 0;
 
 // ox cashless payment
 bool ox = false;
-int ox_credit_per_pulse = 50;
+int ox_credit_per_pulse = 100;
 // volatile int ox_coinsCurrentValue = 0;
 volatile int ox_difference = 0; 
 int ox_Change = 0; // a coin has been inserted flag
@@ -44,7 +42,7 @@ unsigned long ox_currentMillis = 0;
 unsigned long ox_oldMillis = 0;
 volatile int ox_pulsecount = 0;
 int ox_inhibit_relais_pin = 11;
-int ox_act = 12 ;
+int ox_act = 12;
 
 
 // nv10 cashless payment
@@ -74,16 +72,15 @@ int nv10_ch2 = 10;
 // ########## INIT BUTTONS ##########
 
 //const int selector[5] = {17, 16, 15, 14, 0 }; // input pins for selector buttons (A0=14, A1=15, A2=16, A3=17, Dig0=0) UNO
-const int selector[15] = {A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15}; // input pins for selector buttons MEGA
-//const int selector[5] = {A1, A2, A3, A4, A5}; // input pins for selector buttons MEGA 5 buttons and 5/10 or 15 boxes
+//const int selector[15] = {A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15}; // input pins for selector buttons MEGA
+const int selector[5] = {A1, A2, A3, A4, A5}; // input pins for selector buttons MEGA 5 buttons and 5/10 or 15 boxes
 
 // ### don't uses dig1 PIN because it is related to the serial monitor and will causes issues with external periphery (UNO)
 // PINS
 const int configbutton = 5;   // 5 for Mega; 13 for Uno
 const int refillbutton = 3;  // 3 for Mega; for Uno 12 (if only one row of compartments exists: maxrow = 1)
 const int powersave_relais_pin = 4;  // 4 for Mega; for Uno 11
-// config
-const int powersave = 1;  // powersave = 1 -> turnoff power after idle threshold; run at least onetime with 0 to ensure correct data on eeprom
+const int powersave = 0;  // powersave = 1 -> turnoff power after idle threshold; run at least onetime with 0 to ensure correct data on eeprom
 
 // #### EEPROM structure
 //  0          -> 1           : version of this structure : 1 
@@ -92,7 +89,7 @@ const int powersave = 1;  // powersave = 1 -> turnoff power after idle threshold
 //  index * 2 + 4             : conveyorItems []
 //  index * 2 + max * 2 + 4   : conveyorPrice []
 
-const int EEPROM_version = 2;
+const int EEPROM_version = 1;
  
 
 // ########## INIT VALUES ##########
@@ -101,7 +98,7 @@ const int EEPROM_version = 2;
 //int conveyorPrice[15] = {700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700}; // default price  
 int conveyorPrice[5] = {700, 700, 700, 700, 700}; // default price  
 //int conveyorItems[15] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-int conveyorItems[5] = {3, 3, 3, 3, 3};
+int conveyorItems[5] = {2, 2, 2, 2, 2};
 
 // ########## INIT COIN ACCEPTOR ##########
 
@@ -161,17 +158,13 @@ if (debug) {
   delay(500); // don't start main loop until we're sure that the coin selector has started
 
   lcd.clear();
-  lcd.setCursor(0, 0);
-  
-    
-   
+  lcd.setCursor(0, 0); 
 
   // if coinInt goes HIGH (a Pulse), call the coinInserted function
   // an attachInterrupt will always trigger, even if your using delays
   //  attachInterrupt(digitalPinToInterrupt(2), coinInserted, RISING);
   attachInterrupt(coinInt, coinInserted, RISING);
- 
-  
+   
   pinMode(ox_act, INPUT_PULLUP);
   if (digitalRead(ox_act) == LOW) {ox = true;} else {ox = false;}
 
@@ -184,6 +177,15 @@ if (debug) {
     Serial.print(" ox false ");
     }
 }     
+
+if (ox) {
+ ox_oldMillis = millis();
+ if (debug) {
+      Serial.print(" ox_oldMillis ");
+      Serial.print(ox_oldMillis);
+ }
+ 
+}
 
   pinMode(nv10_act, INPUT_PULLUP);
   if (digitalRead(nv10_act) == LOW) {nv10 = true;} else {nv10 = false;}
@@ -285,7 +287,6 @@ if (debug) {
   //  attachInterrupt(digitalPinToInterrupt(2), coinInserted, RISING);
   attachInterrupt(coinInt, coinInserted, RISING);
 
-
   payment_on_off ();
 }
 
@@ -340,36 +341,60 @@ if (debug) {
 void ox_pulse() {
 ox_Change = 1; // flag that there has been cashless payment done
 ox_pulsecount++;
+ox_currentMillis = millis();
+ int ox_difference = ox_currentMillis - ox_oldMillis;
+     
+  ox_oldMillis  = ox_currentMillis; 
+
 if (debug) {    
   Serial.print ("(/ox_pulse) neuer Wert: ");
   Serial.println (  ox_pulsecount);
 }
-}
 
-// ########## OX Check - process cashless payment ##########
-void ox_check() {
-if (ox_Change == 1) {
-  if (debug) {    
-    Serial.print ("(/ox_Change: ");
-    Serial.println (  ox_Change);
-    }     
-    if  (ox_Change > 0)  {
-     ox_currentMillis = millis();
-     ox_difference = ox_currentMillis - ox_oldMillis;
-     ox_oldMillis   = ox_currentMillis;
-     if ((ox_difference > 150 )  ) {
-     ox_Change = 0; // unflag that a cashless payment has been done
+// new ox payment? start to count from beginning
+ if (ox_difference > 310)
+ {
+   if (ox_pulsecount > 1)
+   {
+     ox_pulsecount = 1;
+   }
+ } // diff > xxx
+
+ if (ox_difference < 309)
+ {
+
+//switch (ox_pulsecount) {
+  // wieviele Pulse liefert der ox pro irgendwas? case oder multiplizieren??
+//case 2: coinsCurrentValue  = coinsCurrentValue + nv10_pulsecount * nv10_credit_per_pulse;  
+//        ox_pulsecount    = 0;
+//        break; 
+//case 4: coinsCurrentValue  = coinsCurrentValue + nv10_pulsecount * nv10_credit_per_pulse;  
+ //       ox_pulsecount    = 0;
+ //       break; 
+//case 6: coinsCurrentValue = coinsCurrentValue + nv10_pulsecount * nv10_credit_per_pulse;
+ //       ox_pulsecount    = 0;
+ //      break; 
+ //  } // switch
+
+// oder multiply?
+// vielleicht noch den ersten Pulse verwerfen und durch den ox einen mehr senden lassen, damit die Fehlpulse weggedrückt werden?
+ //   if ( ox_pulsecount > 1)
+  // {
      coinsCurrentValue = coinsCurrentValue + ox_pulsecount * ox_credit_per_pulse;
      ox_pulsecount = 0;
-
-     displayBalance(); // display current balance
-       if (debug) {    
-         Serial.print ("ox_pulsecount reset ");
-        }
-       }   
-      }
-     }
+   }
+ //}
+if (debug) {    
+  Serial.print ("(/ox_pulse) coinsCurrentValue ");
+  Serial.println (  coinsCurrentValue);
+  Serial.print ("(/ox_pulse) ox_difference: ");
+  Serial.println (  ox_difference);
 }
+
+
+
+}
+
 
 // ########## nv10 PULSE - bill payment ##########
 
@@ -504,10 +529,13 @@ for (int avail_index = 0; avail_index < max; avail_index++) {
    
  //  delay (500);
 if (ox)    {
+    if (debug) {
+      Serial.print("attachOX ");
+      }    
    digitalWrite(ox_inhibit_relais_pin,HIGH);
    pinMode(ox_inhibit_relais_pin, OUTPUT);
    attachInterrupt(digitalPinToInterrupt(ox_Int), ox_pulse, RISING);
-   } // ox
+      } // ox
 if (nv10) {
    if (debug) {
       Serial.print("attachNV10 ");
@@ -1125,14 +1153,18 @@ if (debug) {
   
   }
 
+// check if a card or mobile payment has been done
+ if (ox_Change == 1) {
+  if (debug) {
+    Serial.print("ox_Change ");
+   }    
+   ox_Change = 0; // unflag that a card or mobile payment has been done
 
-   if (ox) {
-   ox_check();
-   }
-
-
-
-
+   displayBalance(); // display current balance
+  
+  }
+   
+ 
   // ********** BUTTON PRESSED **********
 
  // wenn nur 5 Button, dann Index kleiner max

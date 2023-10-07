@@ -128,10 +128,17 @@ fallen (geringe) monatliche Gebühren sowie ein paar Prozente Abschlag bei Zahlu
 an. Bei Interesse bitte mit mir Kontakt aufnehmen.
 
 #********************************************************************************#
-are you interested in cashless payment (credit card or apple pay etc.) or 
-in payment with bill (Zahlung mit Geldscheinen)? Please send a mail.
-#********************************************************************************#
 
+
+new fature in Oct 2023:
+
+Payment with Nayax Onyx possible now. Please consider that because of the long boot time
+of Onyx powersave must be disabled. 
+How to wire: +12V, GND, Pulse 1, don't forget to pullup this to +5v;
+To use Onyx you need beside the hardware (Onyx and Pulse-cable) an contract with Nayax for
+credit card / payment clearing; this leads to an monthly fee and a percentage disagio for each
+payment.
+#********************************************************************************#
 any questions? pls contact me: mailto:honigautomat@gmx.de
 Bei Fragen helfe ich gern weiter: honigautomat@gmx.de
 
