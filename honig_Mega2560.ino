@@ -19,7 +19,7 @@ const int max = 5;
 // if maxrow <=2 the button #5 is used to start refill programm otherwise for open 3rd row during programming
 const int maxrow = 2;
 
-unsigned long idlePeriod = 120000; // time in ms between idle messages or shutdown e.g. 180000  
+unsigned long idlePeriod = 60000; // time in ms between idle messages or shutdown e.g. 180000  
 // powersave = 0 show text when Idle; powersave = 1 shutdown when IdlePeriod reached
 
 // debug modus: if you need 10 vendors and one additonal PIN (TX0 / Digital PIN 1 which should normally not be used) on UNO turn debug mode to 0 which disables serial 
@@ -1135,7 +1135,7 @@ if (debug) {
     Serial.print("CoinsChange ");
    }    
    coinsChange = 0; // unflag that a coin has been inserted
-
+   idleTimerMillis = millis();
    displayBalance(); // display current balance
   
   }
@@ -1148,7 +1148,7 @@ if (debug) {
     Serial.print("NV10_Change ");
    }    
    nv10_Change = 0; // unflag that a coin has been inserted
-
+   idleTimerMillis = millis();
    displayBalance(); // display current balance
   
   }
@@ -1159,7 +1159,7 @@ if (debug) {
     Serial.print("ox_Change ");
    }    
    ox_Change = 0; // unflag that a card or mobile payment has been done
-
+   idleTimerMillis = millis();
    displayBalance(); // display current balance
   
   }
