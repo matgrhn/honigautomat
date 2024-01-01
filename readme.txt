@@ -97,8 +97,8 @@ NV10 PINs:
 1 connect to interrupt pin (arduino) and via 10kOhm to +5V
 5 see above
 6 see above
-14 GND 12V
 15 +12V (better turn on/off via coin acceptor relais "coin power") 
+16 GND 12V
 
 ##################################################################################
 new feature with release 2 - powersave:
