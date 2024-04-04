@@ -130,7 +130,7 @@ an. Bei Interesse bitte mit mir Kontakt aufnehmen.
 #********************************************************************************#
 
 
-new fature in Oct 2023:
+new feature in Oct 2023:
 
 Payment with Nayax Onyx possible now. Please consider that because of the long boot time
 of Onyx powersave must be disabled. 
@@ -139,6 +139,43 @@ To use Onyx you need beside the hardware (Onyx and Pulse-cable) an contract with
 credit card / payment clearing; this leads to an monthly fee and a percentage disagio for each
 payment.
 #********************************************************************************#
+
+new feature in April 2024:
+It is now possible to send & receive SMS-messages. 
+You can receive messages about sold items or empty system. You can send messages to
+change the threshold for this. You can send messages to load money onto the system and
+finally it can be used for paypal-payments (QR-code or your paypal-account should be
+visible for the client).
+How does it work?
+Deactivate the PIN of your simcard. I wasn't able to work with SMS using an IOT-Sim 
+because my mobile phone provider doesn't deliver SMS from SIMs with international
+phone number (not start e.g. with 49 for germany).
+The automat sends a sms when automat is empty (threshold=0), 3 or less remaining 
+(threshold=3) or for any sold item (threshold=99). You can send an SMS to your
+system e.g. threshold=0 when you want to change the behaviour until the system is restarted.
+Then the parameter which is set in the sketch is active again. 
+
+!! don't use the powersupport from ardunino for the sim800L, it consumes too much power!!
+Use a separate LM2596 and set this to 3,6V to supply SIM800L (never more than 4,2V)!!
+
+It is now possible to pay with paypal. You have to avtivate "info via mail (html)" on paypal.com
+website to receive an email about any received payment. With your email provider
+you have to setup SMS-info towards your sim. Then the arduino will indentify how much
+money was send and loads it onto the system. The value is visible on the display. It is 
+possible to mix cash with paypal if the client wants it.
+Preconfigered is any value to be loaded onto the system. Inform you clients
+that Paypal-Payments need up to 30 seconds. You can create a QR-Code with a specific
+amount of money using your paypal-app. During testing don't cancel your test sendings, because
+Paypal blocked my first account and was not willing to reactivate. 
+All activities are on your own risk!
+Additional benefit: you can load money as well onto the system with sending an SMS containing 
+the phrase "Sie haben x,00 EUR erhalten" in case of client is calling you because of 
+whatever reason and you may want to give a free product or discount.
+Because of this feature you should keep the phone number of your system confidentual.
+
+###################################################################################
+
+
 any questions? pls contact me: mailto:honigautomat@gmx.de
 Bei Fragen helfe ich gern weiter: honigautomat@gmx.de
 
