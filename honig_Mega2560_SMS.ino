@@ -37,6 +37,7 @@ unsigned long idlePeriod = 120000; // time in ms between idle messages or shutdo
 bool debug = true;
  //          if (!debug) {
           const int homematic_pin = 6;   
+          const int homematic_pin_empty = 7;
  //          }
 unsigned long idleTimerMillis = 0;
 int randomNumber = 0;
@@ -56,7 +57,7 @@ const int buzzer_pin = 49;
 const int  smsPayPal7value  = 700;
 
 // ox cashless payment
-bool ox = true;
+bool ox = false;
 int ox_credit_per_pulse = 100;
 // volatile int ox_coinsCurrentValue = 0;
 volatile int ox_difference = 0; 
@@ -91,6 +92,7 @@ int nv10_act = 13;
 int nv10_ch1 = 9;
 int nv10_ch2 = 10;
 
+char last_paytype = '?';
 
 // ########## INIT BUTTONS ##########
 
@@ -147,6 +149,8 @@ const unsigned int wt_ms = 100; // wait ms
 // const int relaisPin = xx; //
 //const int relays[10] = {3, 4, 5, 6, 7, 8, 9, 10 , 11, 12}; //uno: 10 boxes
 const int relays[15] = {22,24,26,28,30,32,34,36,38,40,42,44,46,48,50}; // mega: 15 boxes
+ 
+
 //const int poweroffrelais = 4;  // mega: 4; uno: only possible if less 10 compartments; in this case pin 12 recommended; remove this pin from relais list
 // poweroffrelais replaced by powersave_relais_pin
 // ########## END OF INIT ##########
@@ -154,6 +158,8 @@ const int relays[15] = {22,24,26,28,30,32,34,36,38,40,42,44,46,48,50}; // mega: 
 // ########## SETUP ###################################################################################
 
 void setup() {
+
+
 
 if (debug) {
   Serial.begin(9600); // start serial communication
@@ -172,6 +178,9 @@ if (debug) {
   digitalWrite(homematic_pin, HIGH);
   pinMode (homematic_pin, OUTPUT);
 
+  digitalWrite(homematic_pin_empty, HIGH);
+  pinMode (homematic_pin_empty, OUTPUT);
+
   digitalWrite(buzzer_pin, LOW);
   pinMode (buzzer_pin, OUTPUT);
 
@@ -184,7 +193,8 @@ if (debug) {
   
   mySerial.begin(9600);
 
-  Serial.println("Initializing sim..");
+
+	Serial.println("Initializing sim..");
   mySerial.println("AT");
   updateSerial(wt_ms);
   Serial.println("AT+CMGF=1");
@@ -193,10 +203,13 @@ if (debug) {
 
 //## how to handle incoming SMS:
 //### display sms
-  mySerial.println("AT+CNMI=1,2,0,0,0"); // Decides how newly arrived SMS messages should be handled
+mySerial.println("AT+CNMI=1,2,0,0,0"); // Decides how newly arrived SMS messages should be handled
+// save sms
+//  mySerial.println("AT+CNMI=2,1,0,0,0"); // Decides how newly arrived SMS messages should be handled
   updateSerial(wt_ms);
-  delay(500);
+  delay(1000);
   
+
   Serial.println(" AT+CMGL:");
  // mySerial.println("AT+CMGL=\"ALL\"\r"); // show all sms stored in SIM-card
  // updateSerial(wt_ms);
@@ -213,9 +226,8 @@ if (debug) {
    /// #### start coin acceptor & deactivate ox_inhibit
   // payment_on_off ();
       
+ // lcd.begin(20, 4); // set up the LCD's number of columns and rows
   lcd.begin(16, 2); // set up the LCD's number of columns and rows
-//  lcd.begin(20, 4); // set up the LCD's number of columns and rows
-
   lcd.print("Bitte warten..."); // Print wait message to the LCD
    if (debug) {
   Serial.println("Warten auf Muenzpruefer");
@@ -362,6 +374,8 @@ if (debug) {
 // This function is called by interrupt every time we receives a pulse from the coin acceptor
 void coinInserted() {
 coinsChange = 1; // flag that there has been a coin inserted
+last_paytype = 'C';
+
 
   currentMillis = millis();
   int difference = currentMillis - oldMillis;
@@ -398,6 +412,8 @@ case 6: coinsCurrentValue = coinsCurrentValue + 100;
 if (debug) {    
   Serial.print ("(/coinsInserted)neuer Wert: ");
   Serial.println (  coinsCurrentValue);
+  Serial.print("last Paytype: ");
+  Serial.println (last_paytype);
 }
 }
 
@@ -407,6 +423,8 @@ if (debug) {
 // This function is called by interrupt every time we receives a pulse from the coin acceptor
 void ox_pulse() {
 ox_Change = 1; // flag that there has been cashless payment done
+last_paytype = 'O';
+
 ox_pulsecount++;
 ox_currentMillis = millis();
  int ox_difference = ox_currentMillis - ox_oldMillis;
@@ -427,7 +445,7 @@ if (debug) {
    }
  } // diff > xxx
 
- if (ox_difference < 309)
+ if ((ox_difference < 309) and (ox_difference > 0))
  {
 
 
@@ -441,7 +459,38 @@ if (debug) {
   Serial.println (  coinsCurrentValue);
   Serial.print ("(/ox_pulse) ox_difference: ");
   Serial.println (  ox_difference);
+  Serial.print("last Paytype: ");
+  Serial.println (last_paytype);
 }
+
+}
+// ################ ox back - inform Naxay about cash payments #############################
+void ox_pulse_back(int oxCurrentValue ) {
+ 
+if (debug) {    
+  Serial.print ("(oxCurrentValue: ");
+  Serial.println (  oxCurrentValue );
+  Serial.print ("ox_credit_per_pulse: ");
+  Serial.print (ox_credit_per_pulse );
+}
+// now we want to use the ox pin for output for a moment...
+   detachInterrupt(digitalPinToInterrupt(ox_Int));   
+   delay(200);
+   pinMode (ox_Int, OUTPUT);
+   digitalWrite(ox_Int, HIGH);
+   delay(100);
+   digitalWrite(ox_Int, LOW);
+   delay(500);
+ 
+// ### back to normal usage of ox-pin
+   delay (200);
+   pinMode(ox_Int, INPUT_PULLUP);
+   delay (1000);
+   attachInterrupt(digitalPinToInterrupt(ox_Int), ox_pulse, RISING);
+
+ if (debug) {    
+  Serial.print ("(/ox_pulse_back end)");  
+  }
 
 }
 
@@ -451,6 +500,8 @@ if (debug) {
 // This function is called by interrupt every time we receives a pulse from the bill acceptor
 void nv10_pulse() {
 nv10_Change = 1; // flag that there has been cashless payment done
+last_paytype = 'N';
+
 nv10_pulsecount++;
 nv10_currentMillis = millis();
  int nv10_difference = nv10_currentMillis - nv10_oldMillis;
@@ -462,6 +513,8 @@ if (debug) {
   Serial.println (  nv10_pulsecount);
   Serial.print ("(/nv10_pulse) nv10_difference: ");
   Serial.println (  nv10_difference);
+  Serial.print("last Paytype: ");
+  Serial.println (last_paytype);
 }
 
 // new bill? start to count from beginning
@@ -649,6 +702,14 @@ if (nv10) {
     pinMode (nv10_ch2, OUTPUT);
     
     }
+
+
+// ##### inform smart that no further product available
+          digitalWrite(homematic_pin_empty, LOW); 
+          delay(1500);
+          digitalWrite(homematic_pin_empty, HIGH); 
+          delay(200);
+
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("Ware leer! ");
@@ -1356,6 +1417,22 @@ if (dataString.indexOf ("threshold=99") >0) {
        displayBalance();
     }
 
+if (dataString.indexOf ("refill") >0) { 
+      digitalWrite(buzzer_pin, HIGH); 
+      delay(500);
+      digitalWrite(buzzer_pin, LOW); 
+      if (debug) {
+       Serial.println(" sms refill "); 
+       }
+       lcd.clear();
+       lcd.setCursor(0, 0);
+       lcd.print("refill");
+         refill();
+         writeEEPROMcomplete(); 
+       delay(1000);
+       displayBalance();
+    }
+
 
   } //## datastring ...
 
@@ -1446,6 +1523,7 @@ if (debug) {
           idleTimerMillis = millis();
           delay(200);
         }
+       // #### SELL ITEM ##### 
         if ((coinsCurrentValue > conveyorPrice[index] - 1) ) { // sufficient balance
           coinsCurrentValue = coinsCurrentValue - conveyorPrice[index]; // reduce balance
           conveyorItems[index]--; // reduce items
@@ -1493,10 +1571,23 @@ if (debug) {
           delay(1500);
           digitalWrite(homematic_pin, HIGH); 
           delay(200);
+// inform Nayax Onyx about sold items but only if it was paid cash (possible last_paytype = O (onyx), N (nv10) or C (cash) )
+  if (debug) {
+    Serial.println("lastPaytype - C=Coin, N=NV10, O=Onyx, ?=not set: ");
+    Serial.print(last_paytype);
+    Serial.println("<-lastPaytype");
+   }    
 
+
+         if(ox) {
+          if  (last_paytype != 'O') {
+          ox_pulse_back (conveyorPrice[index]);
+          } // not for ox payments
+          } 
 
 
         }
+        // ##### END SELL ITEM ##########
       } else {
         displayEmpty();
         idleTimerMillis = millis(); // reset idle timer

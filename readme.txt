@@ -172,6 +172,23 @@ Additional benefit: you can load money as well onto the system with sending an S
 the phrase "Sie haben x,00 EUR erhalten" in case of client is calling you because of 
 whatever reason and you may want to give a free product or discount.
 Because of this feature you should keep the phone number of your system confidentual.
+#*********************************************************************************
+Update 11.04.2024:
+Nayax Onyx can now be inform about cash payments. I decided not to send the amount of
+money by sending a number of pulses back but to send only one pulse (shown in 
+nayax app as 1 EUR because number of empty compartments is more important than the
+revenue. In configuration (nayax app or my.nayax.com in area "Pulse" set "Pulse IN1 Counter to 1" 
+to allow your Nayax Onyx device to receive infos about cash payments. Please be patient, 
+it needs some time until the cash payment is visible in you nayax app.
+Special case: if a client combines Onyx and cash the last payment done will be used
+to decide of a sold item will be reported as cash or not.
+ 
+In addition you can now send "refill" via sms to the machine to activate the refill
+routine wihtout opening the machine: all compartments which are registered as empty
+will open and counters are set back to value written in the code.
+
+If you have some of the additional hardware components e.g. NV10, Onyx, Sim800L please
+use power supply with 2A. 
 
 ###################################################################################
 
