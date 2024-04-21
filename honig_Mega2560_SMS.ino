@@ -27,7 +27,7 @@ LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE); // Set the LCD I2
 const int max = 5; 
 // number of rows (1 = 5 compartments, 2 = 10 compartments, 3 = 15 compartments)
 // if maxrow <=2 the button #5 is used to start refill programm otherwise for open 3rd row during programming
-const int maxrow = 3;
+const int maxrow = 2;
 
 unsigned long idlePeriod = 120000; // time in ms between idle messages or shutdown e.g. 180000  
 // powersave = 0 show text when Idle; powersave = 1 shutdown when IdlePeriod reached
@@ -123,7 +123,7 @@ const int EEPROM_version = 1;
 //int conveyorPrice[15] = {700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700, 700}; // default price  
 int conveyorPrice[5] = {700, 700, 700, 700, 700}; // default price  
 //int conveyorItems[15] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-int conveyorItems[5] = {3, 3, 3, 3, 3};
+int conveyorItems[5] = {2, 2, 2, 2, 2};
 
 // ########## INIT COIN ACCEPTOR ##########
 
@@ -184,45 +184,7 @@ if (debug) {
   digitalWrite(buzzer_pin, LOW);
   pinMode (buzzer_pin, OUTPUT);
 
- if (sim)
-   {
-   // Serial.begin(9600);
-	digitalWrite(buzzer_pin, HIGH); 
-  delay(250);
-  digitalWrite(buzzer_pin, LOW); 
-  
-  mySerial.begin(9600);
-
-
-	Serial.println("Initializing sim..");
-  mySerial.println("AT");
-  updateSerial(wt_ms);
-  Serial.println("AT+CMGF=1");
-  mySerial.println("AT+CMGF=1"); // SMS text mode
-  updateSerial(wt_ms);  
-
-//## how to handle incoming SMS:
-//### display sms
-mySerial.println("AT+CNMI=1,2,0,0,0"); // Decides how newly arrived SMS messages should be handled
-// save sms
-//  mySerial.println("AT+CNMI=2,1,0,0,0"); // Decides how newly arrived SMS messages should be handled
-  updateSerial(wt_ms);
-  delay(1000);
-  
-
-  Serial.println(" AT+CMGL:");
- // mySerial.println("AT+CMGL=\"ALL\"\r"); // show all sms stored in SIM-card
- // updateSerial(wt_ms);
- //Serial.println(" del all sms:");
- //mySerial.println("AT+CMGL=\"DEL ALL\"\r"); // delete all sms from sim-card
- // updateSerial(wt_ms);
- Serial.println(" weiter..");
-  updateSerial(wt_ms);
-  delay(1000);
-
-  last_available_products = sms_available_products;
-
-   }
+ 
    /// #### start coin acceptor & deactivate ox_inhibit
   // payment_on_off ();
       
@@ -285,6 +247,49 @@ if (nv10) {
  }
  
 }
+if (sim)
+   {
+    lcd.setCursor(0, 1);
+  lcd.print("SIM init.. "); 
+     delay(5000);
+   // Serial.begin(9600);
+	digitalWrite(buzzer_pin, HIGH); 
+  delay(250);
+  digitalWrite(buzzer_pin, LOW); 
+  
+  mySerial.begin(9600);
+
+
+	Serial.println("Initializing sim..");
+  mySerial.println("AT");
+  updateSerial(wt_ms);
+  Serial.println("AT+CMGF=1");
+  mySerial.println("AT+CMGF=1"); // SMS text mode
+  updateSerial(wt_ms);  
+
+//## how to handle incoming SMS:
+//### display sms
+mySerial.println("AT+CNMI=1,2,0,0,0"); // Decides how newly arrived SMS messages should be handled
+// save sms
+//  mySerial.println("AT+CNMI=2,1,0,0,0"); // Decides how newly arrived SMS messages should be handled
+  updateSerial(wt_ms);
+  delay(1000);
+  
+
+  Serial.println(" AT+CMGL:");
+ // mySerial.println("AT+CMGL=\"ALL\"\r"); // show all sms stored in SIM-card
+ // updateSerial(wt_ms);
+ //Serial.println(" del all sms:");
+ //mySerial.println("AT+CMGL=\"DEL ALL\"\r"); // delete all sms from sim-card
+ // updateSerial(wt_ms);
+ Serial.println(" weiter..");
+  updateSerial(wt_ms);
+  delay(1000);
+
+  last_available_products = sms_available_products;
+
+   }
+
   lcd.clear();
   lcd.setCursor(0, 1);
   lcd.print("ox "); 
