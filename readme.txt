@@ -190,6 +190,14 @@ will open and counters are set back to value written in the code.
 If you have some of the additional hardware components e.g. NV10, Onyx, Sim800L please
 use power supply with 2A. 
 
+Update 16.05.2024:
+to get Paypal payments we need to receive a SMS containing some key information.
+As far as I found out a private Paypal account can be configured at the paypal
+website to send sms after receiving money, for a business account you need to set 
+up sms info with your mail provider, e.g. gmx is supporting this (9ct costs per sms). 
+In the youtube video I show both ways how to setup the paypal. 
+The QR code (containing a specific sum) can be generated using the paypal app.
+
 ###################################################################################
 
 

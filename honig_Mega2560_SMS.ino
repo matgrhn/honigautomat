@@ -1333,7 +1333,8 @@ void updateSerial(unsigned int wait_ms)
     Serial.println(dataString.indexOf("*EUR erhalten* detected."));
  }    
   
-  //#### SMS received about Paypal paymend:
+  //#### SMS received about Paypal paymend (forwarded email):
+  //  if (dataString.indexOf (" EUR erhalten") >0) or (dataString.indexOf (" EUR mit PayPal gesendet.")
     if (dataString.indexOf (" EUR erhalten") >0) {
   //  currentMillis = millis();
       idleTimerMillis = millis();
@@ -1344,7 +1345,7 @@ void updateSerial(unsigned int wait_ms)
 
   // clarify the position within sms string how much money to consider  
    if (debug) {    
-   Serial.print("dataString / length: ");  
+  Serial.print("dataString *_EUR erhalten* / length: ");  
    Serial.println(dataString); 
    Serial.println(dataString.length());
    position = dataString.indexOf("EUR"); 
@@ -1370,7 +1371,48 @@ void updateSerial(unsigned int wait_ms)
   //   if (debug) {
     Serial.print(" sms Zahlung erfolgt. " ); 
   //  } 
-    }
+     } // forwarded email for paypal business accounts
+
+  //#### SMS received about Paypal paymend (direct sms from Paypal - for privat (non business) paypal accounts):
+  // two spaces before "EUR"!!!
+      if (dataString.indexOf ("  EUR mit PayPal gesendet.") >0)  {
+  //  currentMillis = millis();
+      idleTimerMillis = millis();
+      digitalWrite(buzzer_pin, HIGH); 
+      delay(500);
+      digitalWrite(buzzer_pin, LOW); 
+
+
+  // clarify the position within sms string how much money to consider  
+   if (debug) {    
+   Serial.print("dataString *..EUR mit PayPal gesendet.*/ length: ");  
+   Serial.println(dataString); 
+   Serial.println(dataString.length());
+   position = dataString.indexOf("EUR"); 
+   Serial.print("Position EUR: "); 
+   Serial.println(position); 
+   } // debug
+   part2 = dataString.substring( (position - 6), (position - 4)); 
+   part1 = dataString.substring ( (position - 3 ), (position - 1)  );  
+   numval = ( (part2.toInt() * 100) + part1.toInt() );
+  
+  if (debug) {    
+   Serial.print("part1: ");  
+   Serial.println(part1);     
+   Serial.print("part2: ");  
+   Serial.println(part2);   
+   Serial.print("numval: ");  
+   Serial.print(numval);  
+  } // debug
+
+ //     coinsCurrentValue = coinsCurrentValue + smsPayPal7value;
+      coinsCurrentValue = coinsCurrentValue + numval;
+       displayBalance();
+  //   if (debug) {
+    Serial.print(" sms Zahlung erfolgt. " ); 
+  //  } 
+    } // direct SMS for privat paypal account
+
 
 //#### SMS received to change sms threshold (inform with smsm about sold/remaining items):
 
