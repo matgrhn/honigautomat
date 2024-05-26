@@ -250,8 +250,8 @@ if (nv10) {
 if (sim)
    {
     lcd.setCursor(0, 1);
-  lcd.print("SIM init.15sek"); 
-     delay(15000);
+  lcd.print("SIM init.. "); 
+     delay(5000);
    // Serial.begin(9600);
 	digitalWrite(buzzer_pin, HIGH); 
   delay(250);
