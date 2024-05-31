@@ -1331,47 +1331,62 @@ void updateSerial(unsigned int wait_ms)
     Serial.println("indexOf Paypal_payed7: ");
   //  Serial.println(dataString.indexOf("Sie haben 7,00 EUR erhalten"));
     Serial.println(dataString.indexOf("*EUR erhalten* detected."));
+
  }    
+
+ lcd.clear();
+ lcd.setCursor(0, 0);
+ lcd.print("Zahlung wird");
+ lcd.setCursor(0, 2);
+ lcd.print("empfangen...");
+ delay(3000);
   
   //#### SMS received about Paypal paymend (forwarded email):
-  //  if (dataString.indexOf (" EUR erhalten") >0) or (dataString.indexOf (" EUR mit PayPal gesendet.")
-    if (dataString.indexOf (" EUR erhalten") >0) {
-  //  currentMillis = millis();
-      idleTimerMillis = millis();
-      digitalWrite(buzzer_pin, HIGH); 
-      delay(500);
-      digitalWrite(buzzer_pin, LOW); 
 
+  if (dataString.indexOf("Sie haben ") != -1 && dataString.indexOf(" EUR erhalten") != -1) {
+    Serial.println("Match gefunden: 'Sie haben ... EUR erhalten'");
+    int startIndex = dataString.indexOf("Sie haben ") + String("Sie haben ").length();
+    int endIndex = dataString.indexOf(" EUR erhalten");
+    if (startIndex != -1 && endIndex != -1) {
+      String euroValueStr = dataString.substring(startIndex, endIndex);
+      euroValueStr.replace(",", "."); // Komma durch Punkt ersetzen
+      euroValueStr.trim(); // Leerzeichen entfernen
+      numval = euroStringToCent(euroValueStr); // Euro-Wert in Cent umwandeln
+      float euroValue = numval / 100.0; // Euro-Wert in Dezimal umwandeln
+      Serial.print("Extrahierter Euro-Wert: ");
+      Serial.println(euroValue, 2); // 2 Dezimalstellen anzeigen
+      Serial.print("Extrahierter Cent-Wert: ");
+      Serial.println(numval); // 2 Dezimalstellen anzeigen
+    } else {
+      Serial.println("Konnte den Euro-Wert nicht extrahieren");
+    }
+  } else if (dataString.indexOf("Ihnen wurden ") != -1 && dataString.indexOf(" € EUR gesendet") != -1) {
+    Serial.println("Match gefunden: 'Ihnen wurden ... € EUR gesendet'");
+    int startIndex = dataString.indexOf("Ihnen wurden ") + String("Ihnen wurden ").length();
+    int endIndex = dataString.indexOf(" € EUR gesendet");
+    if (startIndex != -1 && endIndex != -1) {
+      String euroValueStr = dataString.substring(startIndex, endIndex);
+      euroValueStr.replace(",", "."); // Komma durch Punkt ersetzen
+      euroValueStr.trim(); // Leerzeichen entfernen
+      numval = euroStringToCent(euroValueStr); // Euro-Wert in Cent umwandeln
+      float euroValue = numval / 100.0; // Euro-Wert in Dezimal umwandeln
+      Serial.print("Extrahierter Euro-Wert: ");
+      Serial.println(euroValue, 2); // 2 Dezimalstellen anzeigen
+      Serial.print("Extrahierter Cent-Wert: ");
+      Serial.println(numval); // 2 Dezimalstellen anzeigen
+    } else {
+      Serial.println("Konnte den Euro-Wert nicht extrahieren");
+    }
+  } else {
+    Serial.println("Keine Übereinstimmung gefunden");
+  }
 
-  // clarify the position within sms string how much money to consider  
-   if (debug) {    
-  Serial.print("dataString *_EUR erhalten* / length: ");  
-   Serial.println(dataString); 
-   Serial.println(dataString.length());
-   position = dataString.indexOf("EUR"); 
-   Serial.print("Position EUR: "); 
-   Serial.println(position); 
-   } // debug
-   part2 = dataString.substring( (position - 6), (position - 4)); 
-   part1 = dataString.substring ( (position - 3 ), (position - 1)  );  
-   numval = ( (part2.toInt() * 100) + part1.toInt() );
-  
-  if (debug) {    
-   Serial.print("part1: ");  
-   Serial.println(part1);     
-   Serial.print("part2: ");  
-   Serial.println(part2);   
-   Serial.print("numval: ");  
-   Serial.print(numval);  
-  } // debug
-
- //     coinsCurrentValue = coinsCurrentValue + smsPayPal7value;
-      coinsCurrentValue = coinsCurrentValue + numval;
+       coinsCurrentValue = coinsCurrentValue + numval;
        displayBalance();
   //   if (debug) {
     Serial.print(" sms Zahlung erfolgt. " ); 
   //  } 
-     } // forwarded email for paypal business accounts
+
 
   //#### SMS received about Paypal paymend (direct sms from Paypal - for privat (non business) paypal accounts):
   // two spaces before "EUR"!!!
@@ -1493,6 +1508,7 @@ if (dataString.indexOf ("refill") >0) {
 // ########## MAIN LOOP ##########
 
 void loop() {
+
   if (digitalRead(configbutton) == LOW) {
 if (debug) {
    Serial.print("DigitalRead(configb): LOW");
@@ -1655,4 +1671,17 @@ updateSerial(0);
 }
 
 
+}
+
+
+int euroStringToCent(String euroValueStr) {
+  // Entferne das Euro-Symbol, falls vorhanden
+  euroValueStr.replace("€", "");
+  // Entferne Leerzeichen, falls vorhanden
+  euroValueStr.trim();
+  // Teile den Euro-Wert auf
+  int euroPart = euroValueStr.substring(0, euroValueStr.indexOf(".")).toInt();
+  int centPart = euroValueStr.substring(euroValueStr.indexOf(".") + 1).toInt();
+  // Konvertiere Euro-Wert in Cent
+  return euroPart * 100 + centPart;
 }
