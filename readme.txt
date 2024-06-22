@@ -198,7 +198,33 @@ up sms info with your mail provider, e.g. gmx is supporting this (9ct costs per 
 In the youtube video I show both ways how to setup the paypal. 
 The QR code (containing a specific sum) can be generated using the paypal app.
 
+##################################################################################
+new feature with release 3 May 2024
+with help of ChatGPT I have added some code to support a keypad to select number of
+compartment items instead of pushing buttons. This mean all functions depending on buttons
+will now be supported by numbers of the keypad e.g. in programming mode
+1 - less
+2 - more
+3 - next
+4 - open compartment 
+5 - refill
+(open and refill only during 'number of items change' phase - not while amending the prices.
+it is possible to press one or two number values leading to numbers 0-9 or above 10.
+Numbers less or equal "max * maxrow" are accepted during product selection.
+
 ###################################################################################
+
+-------------------------------------------------------------------------------
+Update 22.06.2024:
+SMS:
+some SIM800L modules are requesting higher voltage for stable connections - you should increase voltage from 3.6V up to 4.1v (MAX!!) 
+
+Paypal:
+depending on Paypal-account, private users can receive SMS directly, business accounts are receiving emails which have to be forwarded by your mail provider as sms.
+SMS text contained for me always two spaces in front of text "EUR", but others (e.g. a friend in Austria) are receiving sms containing only one space " EUR". This is now considered in latest sketch (June 2024).
+
+
+
 
 
 any questions? pls contact me: mailto:honigautomat@gmx.de

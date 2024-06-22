@@ -50,4 +50,10 @@ if (difference < 141) {
 ....
 -------------------------------------------------------------------------------
 
+SMS:
+some SIM800l modules need higher voltage - increase voltage from 3.6V up to 4.1v (MAX!!) 
+
+Paypal:
+depending on Paypal-account, private users can receive SMS directly, business accounts are receiving emails which have to be forwarded by your mail provider as sms.
+SMS text contained for me always two spaces in front of text "EUR", but others (e.g. a friend in Austria) are receiving sms containing only one space " EUR". This is now considered in latest sketch (June 2024).
 

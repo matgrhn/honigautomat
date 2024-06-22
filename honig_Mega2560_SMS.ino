@@ -294,7 +294,7 @@ mySerial.println("AT+CNMI=1,2,0,0,0"); // Decides how newly arrived SMS messages
   lcd.setCursor(0, 1);
   lcd.print("ox "); 
   lcd.print(ox);  
-  lcd.print(" nv10 "); 
+  lcd.print(" nv "); 
   lcd.print(nv10);  
   lcd.print(" sim "); 
   lcd.print(sim);  
@@ -1333,7 +1333,7 @@ void updateSerial(unsigned int wait_ms)
     Serial.println(dataString.indexOf("*EUR erhalten* detected."));
  }    
   
-  //#### SMS received about Paypal paymend (forwarded email):
+  //#### SMS received about Paypal payment (forwarded email):
   //  if (dataString.indexOf (" EUR erhalten") >0) or (dataString.indexOf (" EUR mit PayPal gesendet.")
     if (dataString.indexOf (" EUR erhalten") >0) {
   //  currentMillis = millis();
@@ -1373,9 +1373,10 @@ void updateSerial(unsigned int wait_ms)
   //  } 
      } // forwarded email for paypal business accounts
 
-  //#### SMS received about Paypal paymend (direct sms from Paypal - for privat (non business) paypal accounts):
-  // two spaces before "EUR"!!!
-      if (dataString.indexOf ("  EUR mit PayPal gesendet.") >0)  {
+  //#### SMS received about Paypal payment (direct sms from Paypal - for privat (non business) paypal accounts):
+  // sometimes two spaces on front of text "EUR", sometimes one space!!!
+        if ((dataString.indexOf ("  EUR mit PayPal gesendet.") >0)  or
+        (dataString.indexOf (" EUR mit PayPal gesendet.") >0))  {
   //  currentMillis = millis();
       idleTimerMillis = millis();
       digitalWrite(buzzer_pin, HIGH); 
