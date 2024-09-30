@@ -222,8 +222,13 @@ some SIM800L modules are requesting higher voltage for stable connections - you 
 Paypal:
 depending on Paypal-account, private users can receive SMS directly, business accounts are receiving emails which have to be forwarded by your mail provider as sms.
 SMS text contained for me always two spaces in front of text "EUR", but others (e.g. a friend in Austria) are receiving sms containing only one space " EUR". This is now considered in latest sketch (June 2024).
-
-
+-------------------------------------------------------------------------------
+Update 30.09.2024:
+SMS/Paypal:
+I was informed that Paypal recently changed the SMS message about payments (for private accounts, at least in Austria it was reported).
+old text "... Sie haben 7,00 EUR erhalten" or "... Sie haben 7,00  EUR erhalten"  (one or two spaces before "EUR") to
+new text "... Sie haben 7.0 EUR erhalten", which means new separator point instead of comma and only one digit after the separator. The sketch is now able to handle all three cases.
+--------------------------------------------------------------------------------
 
 
 
