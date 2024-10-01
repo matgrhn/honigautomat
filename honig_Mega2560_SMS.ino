@@ -1370,7 +1370,7 @@ void updateSerial(unsigned int wait_ms)
   if ((part2.substring (0,1) == "n") && (part1.substring (0,1) == "."))
    {
     if (debug) {    
-     Serial.print("separator point instea of comma!");  
+     Serial.print("separator point instead of comma!");  
       } //debug
      part2 = dataString.substring( (position - 5), (position - 3)); 
      part1 = dataString.substring ( (position - 2 ), (position - 1)  );  
@@ -1418,13 +1418,32 @@ void updateSerial(unsigned int wait_ms)
    numval = ( (part2.toInt() * 100) + part1.toInt() );
   
   if (debug) {    
-   Serial.print("part1: ");  
+   Serial.print("part1 b: ");  
    Serial.println(part1);     
-   Serial.print("part2: ");  
+   Serial.print("part2 b: ");  
    Serial.println(part2);   
    Serial.print("numval: ");  
    Serial.print(numval);  
   } // debug
+// paypal changed sms message in 9/24 - sometimes separator . instead of comma; one digit after separator
+  if ((part2.substring (0,1) == "n") && (part1.substring (0,1) == "."))
+   {
+    if (debug) {    
+     Serial.print("separator point instead of comma!");  
+      } //debug
+     part2 = dataString.substring( (position - 5), (position - 3)); 
+     part1 = dataString.substring ( (position - 2 ), (position - 1)  );  
+     numval = ( (part2.toInt() * 100) + part1.toInt() );
+     if (debug) {    
+        Serial.println("part1 c: ");  
+        Serial.println(part1);     
+        Serial.print("part2 c: ");  
+        Serial.println(part2);   
+        Serial.print("numval: ");  
+        Serial.print(numval);  
+       } // debug
+   }  // point as separator / on digit after separator
+
 
  //     coinsCurrentValue = coinsCurrentValue + smsPayPal7value;
       coinsCurrentValue = coinsCurrentValue + numval;

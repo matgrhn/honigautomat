@@ -228,6 +228,9 @@ SMS/Paypal:
 I was informed that Paypal recently changed the SMS message about payments (for private accounts, at least in Austria it was reported).
 old text "... Sie haben 7,00 EUR erhalten" or "... Sie haben 7,00  EUR erhalten"  (one or two spaces before "EUR") to
 new text "... Sie haben 7.0 EUR erhalten", which means new separator point instead of comma and only one digit after the separator. The sketch is now able to handle all three cases.
+Update 0.10.2024:
+In addition, the text "..EUR mit PayPal gesendet.." is now validated correctly.
+
 --------------------------------------------------------------------------------
 
 
