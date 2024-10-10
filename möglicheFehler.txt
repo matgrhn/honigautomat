@@ -3,8 +3,9 @@ Great that you will use this concept. You want to support this project?
 Thanks for sending a tip to:
 
 https://www.paypal.me/MatthiasGruehn?locale.x=de_DE
+-------------------------------------------------------------------------------
 
-
+to fill the automat it is important to use the refill button. This button opens alle (logical) empty compartments and sets it internal counter to available product = 1 again.
 
 -------------------------------------------------------------------------------
 
@@ -27,8 +28,8 @@ on the side of the coin selector is a switch which should be set to "fast". on t
 the number of pulses (2..6) should be displayed when you feed a coin. If this is not the case the coin acceptor should be programmed again.
 -------------------------------------------------------------------------------
 some coins where not accepted
-programm the coin acceptor and choose a different sensitivity (e.g. set value F to 7 instead of 8). If this doesn't help you can collect two heaps of coins and 
-programm the ones working and the others separately. This means you have 6 instead of 5 different coins. Of course both coins with same values should be attached 
+program the coin acceptor and choose a different sensitivity (e.g. set value F to 7 instead of 8). If this doesn't help you can collect two heaps of coins and 
+program the ones working and the others separately. This means you have 6 instead of 5 different coins. Of course both coins with same values should be attached 
 to the same number of pulses
 -------------------------------------------------------------------------------
 I have faced a situation where the arduino doesn't calculated the coins correctly, in some cases values were displayed even when the coins have not been inserted.
@@ -59,4 +60,13 @@ SMS text contained for me always two spaces in front of text "EUR", but others (
 
 Paypal: 
 new text about payments contains point as separator instead of comma and only one digit after the separator; please use not the sketch from 30.9.24 or later.
+--------------------------------------------------------------------------------
+Usage of Keypad (3x4) with version from 10.10.2024:
+please consider during setup
+maxrow must be set to one - each compartment has its own price, number of products per vendor: max = 1
+if you want to disable a compartment after refill, please simulate to by from this compartment - it is not possible to set values (number of available products) any more. 
+---------------------------------------------------------------------------------
+
+
+
 

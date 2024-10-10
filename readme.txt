@@ -232,7 +232,18 @@ Update 0.10.2024:
 In addition, the text "..EUR mit PayPal gesendet.." is now validated correctly.
 
 --------------------------------------------------------------------------------
+Update 10.10.2024:
+Regarding Paypal: sim800l is required for this. Depending on your Paypal account, Paypal sends an SMS (to the number of the machine, which is therefore kept secret), or you receive an email, which you forward to the machine as an SMS via your email account. The Arduino evaluates the text and can then top up a sum. It can take up to 30 seconds for the SMS to arrive at the machine, which is due to Paypal or the email forwarding and not the Arduino.
+Attention: Paypal has already blocked two of my accounts due to alleged fraudulent activities, which is why I no longer want to use Paypal. Technically, however, the concept is still supported. However, I now like to use top-up via SMS independently of Paypal by sending the machine an SMS with the appropriate text. One use case is when I get a call from a customer who is standing directly at the machine (coin doesn't work, no change, discount...)
+--------------------------------------------------------------------------------
+New from October 2024 (release 4):
+Please don't use arduino Uno anymore, instead Mega 2560 ist suggested. The sketch is not updated for UNO any more!
 
+Instead of the selection buttons, a keypad (3x4) can now be used. To do this,
+keypad = true;
+must be set, as well as maxrow=1; because each compartment has its own number with its own price. In programming mode, only prices are set, not product quantities. Input in cents, up to four digits. The price 9.99 is not possible for technical reasons. Every price change is concluded with #.
+In programming mode, the compartment can be opened with *, but the counter is not changed. Therefore, always use the refill button when filling empty compartments. If necessary, press any compartments that have been opened incorrectly again afterwards. If prices are to be changed and the associated compartments are to be opened, programming mode must be run through for all compartments twice.
+Either selection buttons OR keypad. Both at the same time are not supported.
 
 
 any questions? pls contact me: mailto:honigautomat@gmx.de
