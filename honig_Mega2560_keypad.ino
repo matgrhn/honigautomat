@@ -102,7 +102,7 @@ char last_paytype = '?';
 // in case of keypad usage: set maxrow = 1 and max to number of vending units!
 // it is not possible to use select buttons and keypad in parallel.
 // each vending unit can have a specific price
-bool keypad = true;
+bool keypad = false;
 const byte ROWS = 4;  
 const byte COLS = 3;   
 char keys[ROWS][COLS] = {
