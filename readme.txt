@@ -244,6 +244,10 @@ keypad = true;
 must be set, as well as maxrow=1; because each compartment has its own number with its own price. In programming mode, only prices are set, not product quantities. Input in cents, up to four digits. The price 9.99 is not possible for technical reasons. Every price change is concluded with #.
 In programming mode, the compartment can be opened with *, but the counter is not changed. Therefore, always use the refill button when filling empty compartments. If necessary, press any compartments that have been opened incorrectly again afterwards. If prices are to be changed and the associated compartments are to be opened, programming mode must be run through for all compartments twice.
 Either selection buttons OR keypad. Both at the same time are not supported.
+Update 15.10.2024:
+sms process changed. In case of threshold=3 (default or set per sms) the information about available remaining products is only send out in case of exact 3 remaining products and when empty.
+Refill will not lead to send sms any more. Please note that threshold is set to value as defined in sketch during refill. 
+
 
 
 any questions? pls contact me: mailto:honigautomat@gmx.de

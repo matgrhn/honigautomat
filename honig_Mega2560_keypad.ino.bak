@@ -14,7 +14,6 @@
 const char TELEFONE_NUMBER[] = "+xxxxxxxxxxxx"  ;
 //warum kann man nicht sim = false setzen??
 bool sim = false;
-bool refill_ongoing = false;
 
 SoftwareSerial mySerial(PIN_TX, PIN_RX);
 
@@ -638,10 +637,7 @@ if (nv10)
  delay(1000);
   attachInterrupt(coinInt, coinInserted, RISING);  
 // attach interrupts again if products are still available 
-if (!refill_ongoing)
-{
  payment_on_off();
-}
 }
 
 
@@ -708,9 +704,7 @@ if (nv10) {
 
           if (sim)
           {
-
-           if ((last_available_products == available_products) && ( (available_products == 3) || (available_products == 0) )
-            || ((sms_available_products == 99) && (available_products > 3)))
+          if (last_available_products > available_products)
            {
           updateSerial(wt_ms);
           mySerial.println("AT+CMGF=1");
@@ -1304,7 +1298,6 @@ if (debug) {
 // open all empty boxes and set their value to maxrow
 
 void refill() {
- refill_ongoing = true;
  if (debug) {
   Serial.print(" Refill ");
  }  
@@ -1384,7 +1377,6 @@ if (debug) {
     lcd.print("Refill beendet.");
     }    
     delay(2000);
-    refill_ongoing = false;
     payment_on_off ();
     coinsCurrentValue = 0;
     lcd.print("Guthaben reset");
