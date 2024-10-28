@@ -66,7 +66,8 @@ please consider during setup
 maxrow must be set to one - each compartment has its own price, number of products per vendor: max = 1
 if you want to disable a compartment after refill, please simulate to by from this compartment - it is not possible to set values (number of available products) any more. 
 ---------------------------------------------------------------------------------
-please see document "keypad_installed_libraries.jpg" containing information which libraries should be installed to get the code compiled.
+please see document "keypad_installed_libraries.jpg" containing information which libraries should be installed to get the code compiled. In addition, you need
+Keypad_I2C from https://github.com/joeyoung/arduino_keypads.git - Extract and copy the folder  Keypad_I2C into your folder /dokumente/arduino/libraries if you can't compile.
 
 
 

@@ -1967,7 +1967,7 @@ if (debug) {
         if (coinsCurrentValue < conveyorPrice[index]) { // insufficient balance - display price
           displayPrice(conveyorPrice[index]);
           idleTimerMillis = millis();
-          delay(200);
+          delay(2000);
         }
        // #### SELL ITEM ##### 
         if ((coinsCurrentValue > conveyorPrice[index] - 1) ) { // sufficient balance
