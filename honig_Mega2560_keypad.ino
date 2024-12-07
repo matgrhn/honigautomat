@@ -12,7 +12,7 @@
 // Cell phone number incl. country code "+49" for Germany and xxxxxxxxxxx = phone number
 //   don't forget to change your phone number: !!!!!!!!!!!!!!
 const char TELEFONE_NUMBER[] = "+xxxxxxxxxxxx"  ;
-//warum kann man nicht sim = false setzen??
+// 
 bool sim = false;
 bool refill_ongoing = false;
 
@@ -1643,7 +1643,9 @@ void updateSerial(unsigned int wait_ms)
       } //debug
      part2 = dataString.substring( (position - 5), (position - 3)); 
      part1 = dataString.substring ( (position - 2 ), (position - 1)  );  
-     numval = ( (part2.toInt() * 100) + part1.toInt() );
+   //  numval = ( (part2.toInt() * 100) + part1.toInt() );
+ // upd 12/24: payment 2.5 was considered as 2.05 - corrected:
+     numval = ( (part2.toInt() * 100) + (part1.toInt() * 10) );
      if (debug) {    
         Serial.println("part1 a: ");  
         Serial.println(part1);     
@@ -1701,7 +1703,9 @@ void updateSerial(unsigned int wait_ms)
       } //debug
      part2 = dataString.substring( (position - 5), (position - 3)); 
      part1 = dataString.substring ( (position - 2 ), (position - 1)  );  
-     numval = ( (part2.toInt() * 100) + part1.toInt() );
+  //   numval = ( (part2.toInt() * 100) + part1.toInt() );
+ // upd 12/24: payment 2.5 was considered as 2.05 - corrected:
+     numval = ( (part2.toInt() * 100) + (part1.toInt() * 10) );
      if (debug) {    
         Serial.println("part1 c: ");  
         Serial.println(part1);     
