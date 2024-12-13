@@ -56,7 +56,7 @@ int last_available_products = 99;
 const int buzzer_pin = 49;
 
 
-// #### parameter for Paypal payment (QR-code incl. value to be generated via Paypal mobile app)
+// #### parameter for Paypal or sumup payment (QR-code incl. value to be generated via Paypal mobile app or sumup webpage)
 // email forward to sms including following string: 
 //const char smsPayPal7       = "Sie haben 7,00 EUR erhalten";
 const int  smsPayPal7value  = 700;
@@ -1723,6 +1723,49 @@ void updateSerial(unsigned int wait_ms)
     Serial.print(" sms Zahlung erfolgt. " ); 
   //  } 
     } // direct SMS for privat paypal account
+//###########################################
+//#### SMS received about sumup:
+  // 
+        if ((dataString.indexOf ("SumUp - Sie wurden bezahlt - Sie wurden soeben bezahlt!") >0)  or
+        (dataString.indexOf ("Sie haben eine Zahlung für den folgenden Zahlungslink erhalten: Betrag") >0))  {
+  //  currentMillis = millis();
+      idleTimerMillis = millis();
+      digitalWrite(buzzer_pin, HIGH); 
+      delay(500);
+      digitalWrite(buzzer_pin, LOW); 
+
+
+  // clarify the position within sms string how much money to consider  
+   if (debug) {    
+   Serial.print("dataString *sumup - Sie wurden bezahlt ...*/ length: ");  
+   Serial.println(dataString); 
+   Serial.println(dataString.length());
+   position = dataString.indexOf("EUR"); 
+   Serial.print("Position EUR: "); 
+   Serial.println(position); 
+   } // debug
+   part2 = dataString.substring( (position - 6), (position - 4)); 
+   part1 = dataString.substring ( (position - 3 ), (position - 1)  );  
+   numval = ( (part2.toInt() * 100) + part1.toInt() );
+  
+  if (debug) {    
+   Serial.print("part1 b: ");  
+   Serial.println(part1);     
+   Serial.print("part2 b: ");  
+   Serial.println(part2);   
+   Serial.print("numval: ");  
+   Serial.print(numval);  
+  } // debug
+// paypal changed sms message in 9/24 - sometimes separator . instead of comma; one digit after separator
+
+ //     coinsCurrentValue = coinsCurrentValue + smsPayPal7value;
+      coinsCurrentValue = coinsCurrentValue + numval;
+       displayBalance();
+  //   if (debug) {
+    Serial.print(" sms Zahlung erfolgt. " ); 
+  //  } 
+    } // sms about sumup payment
+//###########################################
 
 
 //#### SMS received to change sms threshold (inform with smsm about sold/remaining items):
@@ -2053,10 +2096,7 @@ if (debug) {
 //##### check if SMS incoming....
 if (sim)
 {
-  if (debug)
-  {
-   // Serial.println ("check .. " ); // be care this produces huge amount of messages
-  }
+
 updateSerial(0);
 }
 

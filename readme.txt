@@ -247,6 +247,15 @@ Either selection buttons OR keypad. Both at the same time are not supported.
 Update 15.10.2024:
 sms process changed. In case of threshold=3 (default or set per sms) the information about available remaining products is only send out in case of exact 3 remaining products and when empty.
 Refill will not lead to send sms any more. Please note that threshold is set to value as defined in sketch during refill. 
+--------------------------------------------------------------------------------
+New from December 2024 
+payment with QR-Code from Sumup is now possible!
+You need sms feature (see video concerning sim800l / setup sim=true, sim of course, email account for each vending machine - I suggest gmx because it supports sms service [9ct per sms] with free mail account; create an sumup account, create an team member for each vending machine; setup team member and login with as this team member, create payment link , set permanent link = true and notify me about payments to true; generate QR code and add a text hint that it needs about one minute until the payment is displayed on the vending machine.
+Login at gmx with specific mail account and create two filter rule: forward mails send from sumup and subject "Sie wurden bezahlt" - don't forget to set the "and"-condition to ensure that both filter rules are true - send sms. Done.
+--------------------------------------------------------------------------------
+
+
+
 
 
 
