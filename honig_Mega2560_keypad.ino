@@ -638,7 +638,7 @@ if (nv10)
  delay(1000);
   attachInterrupt(coinInt, coinInserted, RISING);  
 // attach interrupts again if products are still available 
-if (!refill_ongoing)
+//if (!refill_ongoing)
 {
  payment_on_off();
 }
@@ -697,6 +697,7 @@ if (nv10) {
    pinMode (nv10_ch1, OUTPUT);
    digitalWrite(nv10_ch2, LOW);
    pinMode (nv10_ch2, OUTPUT);
+   delay(300);
    attachInterrupt(digitalPinToInterrupt(nv10_Int), nv10_pulse, RISING);
    if (debug) {
       Serial.print("attachNV10 done");
